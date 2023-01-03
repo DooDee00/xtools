@@ -7,6 +7,8 @@ declare(strict_types = 1);
 
 namespace App\Model;
 
+use App\Repository\SimpleEditCounterRepository;
+
 /**
  * A SimpleEditCounter provides basic edit count stats about a user.
  * This class is too 'simple' to bother with tests, we just get the results of the query and return them.
@@ -37,8 +39,15 @@ class SimpleEditCounter extends Model
      * @param false|int $start As Unix timestamp.
      * @param false|int $end As Unix timestamp.
      */
-    public function __construct(Project $project, User $user, $namespace = 'all', $start = false, $end = false)
-    {
+    public function __construct(
+        SimpleEditCounterRepository $repository,
+        Project $project,
+        User $user,
+        $namespace = 'all',
+        $start = false,
+        $end = false
+    ) {
+        $this->repository = $repository;
         $this->project = $project;
         $this->user = $user;
 
@@ -79,7 +88,7 @@ class SimpleEditCounter extends Model
 
     private function prepareFullData(): void
     {
-        $results = $this->getRepository()->fetchData(
+        $results = $this->repository->fetchData(
             $this->project,
             $this->user,
             $this->namespace,

@@ -7,6 +7,8 @@ declare(strict_types = 1);
 
 namespace App\Model;
 
+use App\Repository\PageAssessmentsRepository;
+
 /**
  * A PageAssessments is responsible for handling logic around
  * processing page assessments of a given set of Pages on a Project.
@@ -18,14 +20,16 @@ class PageAssessments extends Model
     public const SUPPORTED_NAMESPACES = [0, 4, 6, 10, 14, 100, 108, 118];
 
     /** @var array The assessments config. */
-    protected $config;
+    protected array $config;
 
     /**
      * Create a new PageAssessments.
+     * @param PageAssessmentsRepository $repository
      * @param Project $project
      */
-    public function __construct(Project $project)
+    public function __construct(PageAssessmentsRepository $repository, Project $project)
     {
+        $this->repository = $repository;
         $this->project = $project;
     }
 
@@ -36,7 +40,7 @@ class PageAssessments extends Model
     public function getConfig()
     {
         if (!isset($this->config)) {
-            return $this->config = $this->getRepository()->getConfig($this->project);
+            return $this->config = $this->repository->getConfig($this->project);
         }
 
         return $this->config;
@@ -109,7 +113,7 @@ class PageAssessments extends Model
             return false;
         }
 
-        $data = $this->getRepository()->getAssessments($page, true);
+        $data = $this->repository->getAssessments($page, true);
 
         if (isset($data[0])) {
             return $this->getClassFromAssessment($data[0]);
@@ -143,7 +147,7 @@ class PageAssessments extends Model
         }
 
         $config = $this->getConfig();
-        $data = $this->getRepository()->getAssessments($page);
+        $data = $this->repository->getAssessments($page);
 
         // Set the default decorations for the overall quality assessment.
         // This will be replaced with the first valid class defined for any WikiProject.

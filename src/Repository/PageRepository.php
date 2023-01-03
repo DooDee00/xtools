@@ -257,7 +257,7 @@ class PageRepository extends Repository
     /**
      * Get basic wikidata on the page: label and description.
      * @param Page $page
-     * @return string[] In the format:
+     * @return string[][] In the format:
      *    [[
      *         'term' => string such as 'label',
      *         'term_text' => string (value for 'label'),
@@ -373,7 +373,7 @@ class PageRepository extends Repository
      * @param Page $page
      * @param string|DateTime $start In the format YYYYMMDD
      * @param string|DateTime $end In the format YYYYMMDD
-     * @return string[]
+     * @return string[][][]
      */
     public function getPageviews(Page $page, $start, $end): array
     {

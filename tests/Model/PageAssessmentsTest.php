@@ -23,6 +23,9 @@ class PageAssessmentsTest extends TestAdapter
     /** @var ContainerInterface The Symfony localContainer ($localContainer to not override self::$container). */
     protected $localContainer;
 
+    /** @var PageAssessments */
+    protected $pa;
+
     /** @var PageAssessmentsRepository The repository for page assessments. */
     protected $paRepo;
 
@@ -50,8 +53,7 @@ class PageAssessmentsTest extends TestAdapter
      */
     public function testBasics(): void
     {
-        $pa = new PageAssessments($this->project);
-        $pa->setRepository($this->paRepo);
+        $pa = new PageAssessments($this->paRepo, $this->project);
 
         static::assertEquals(
             $this->localContainer->getParameter('assessments')['en.wikipedia.org'],
@@ -67,8 +69,7 @@ class PageAssessmentsTest extends TestAdapter
      */
     public function testBadges(): void
     {
-        $pa = new PageAssessments($this->project);
-        $pa->setRepository($this->paRepo);
+        $pa = new PageAssessments($this->paRepo, $this->project);
 
         static::assertEquals(
             'https://upload.wikimedia.org/wikipedia/commons/b/bc/Featured_article_star.svg',
@@ -91,8 +92,7 @@ class PageAssessmentsTest extends TestAdapter
             'title' => 'Test Page',
             'ns' => 0,
         ]);
-        $page = new Page($this->project, 'Test_page');
-        $page->setRepository($pageRepo);
+        $page = new Page($pageRepo, $this->project, 'Test_page');
 
         $this->paRepo->expects($this->once())
             ->method('getAssessments')
@@ -110,8 +110,7 @@ class PageAssessmentsTest extends TestAdapter
                 ],
             ]);
 
-        $pa = new PageAssessments($this->project);
-        $pa->setRepository($this->paRepo);
+        $pa = new PageAssessments($this->paRepo, $this->project);
 
         $assessments = $pa->getAssessments($page);
 

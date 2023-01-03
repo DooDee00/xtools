@@ -42,7 +42,7 @@ class AutomatedEditsController extends XtoolsController
      * if the user has too high of an edit count.
      * @return string
      */
-    public function tooHighEditCountAction(): string
+    public function tooHighEditCountRoute(): string
     {
         return $this->getIndexRoute();
     }

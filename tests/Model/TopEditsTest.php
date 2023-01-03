@@ -11,6 +11,8 @@ use App\Model\Page;
 use App\Model\Project;
 use App\Model\TopEdits;
 use App\Model\User;
+use App\Repository\EditRepository;
+use App\Repository\PageRepository;
 use App\Repository\ProjectRepository;
 use App\Repository\TopEditsRepository;
 use App\Tests\TestAdapter;
@@ -28,6 +30,12 @@ class TopEditsTest extends TestAdapter
 
     /** @var TopEditsRepository The TopEdits repo instance. */
     protected $teRepo;
+
+    /** @var EditRepository */
+    protected $editRepo;
+
+    /** @var PageRepository */
+    protected $pageRepo;
 
     /** @var User The user instance. */
     protected $user;
@@ -52,6 +60,8 @@ class TopEditsTest extends TestAdapter
         $this->teRepo = $this->createMock(TopEditsRepository::class);
         $this->teRepo->method('getContainer')
             ->willReturn($container);
+        $this->editRepo = $this->createMock(EditRepository::class);
+        $this->pageRepo = $this->createMock(PageRepository::class);
     }
 
     /**
@@ -60,26 +70,26 @@ class TopEditsTest extends TestAdapter
     public function testBasic(): void
     {
         // Single namespace, with defaults.
-        $te = new TopEdits($this->project, $this->user);
+        $te = new TopEdits($this->teRepo, $this->editRepo, $this->project, $this->user);
         static::assertEquals(0, $te->getNamespace());
         static::assertEquals(1000, $te->getLimit());
 
         // Single namespace, explicit configuration.
-        $te2 = new TopEdits($this->project, $this->user, null, 5, false, false, 50);
+        $te2 = new TopEdits($this->teRepo, $this->editRepo, $this->project, $this->user, null, 5, false, false, 50);
         static::assertEquals(5, $te2->getNamespace());
         static::assertEquals(50, $te2->getLimit());
 
         // All namespaces, so limit set.
-        $te3 = new TopEdits($this->project, $this->user, null, 'all');
+        $te3 = new TopEdits($this->teRepo, $this->editRepo, $this->project, $this->user, null, 'all');
         static::assertEquals('all', $te3->getNamespace());
         static::assertEquals(20, $te3->getLimit());
 
         // All namespaces, explicit limit.
-        $te4 = new TopEdits($this->project, $this->user, null, 'all', false, false, 3);
+        $te4 = new TopEdits($this->teRepo, $this->editRepo, $this->project, $this->user, null, 'all', false, false, 3);
         static::assertEquals('all', $te4->getNamespace());
         static::assertEquals(3, $te4->getLimit());
 
-        $page = new Page($this->project, 'Test page');
+        $page = new Page($this->pageRepo, $this->project, 'Test page');
         $te->setPage($page);
         static::assertEquals($page, $te->getPage());
     }
@@ -89,7 +99,7 @@ class TopEditsTest extends TestAdapter
      */
     public function testTopEditsAllNamespaces(): void
     {
-        $te = new TopEdits($this->project, $this->user, null, 'all', false, false, 2);
+        $te = new TopEdits($this->teRepo, $this->editRepo, $this->project, $this->user, null, 'all', false, false, 2);
         $this->teRepo->expects($this->once())
             ->method('getTopEditsAllNamespaces')
             ->with($this->project, $this->user, '', '', 2)
@@ -125,7 +135,7 @@ class TopEditsTest extends TestAdapter
      */
     public function testTopEditsNamespace(): void
     {
-        $te = new TopEdits($this->project, $this->user, null, 3, false, false, 2);
+        $te = new TopEdits($this->teRepo, $this->editRepo, $this->project, $this->user, null, 3, false, false, 2);
         $this->teRepo->expects($this->once())
             ->method('getTopEditsNamespace')
             ->with($this->project, $this->user, 3, false, false, 2)
@@ -193,9 +203,9 @@ class TopEditsTest extends TestAdapter
      */
     public function testTopEditsPage(): void
     {
-        $page = new Page($this->project, 'Test page');
+        $page = new Page($this->pageRepo, $this->project, 'Test page');
 
-        $te = new TopEdits($this->project, $this->user, $page);
+        $te = new TopEdits($this->teRepo, $this->editRepo, $this->project, $this->user, $page);
         $this->teRepo->expects($this->once())
             ->method('getTopEditsPage')
             ->willReturn($this->topEditsPageFactory());

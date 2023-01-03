@@ -8,6 +8,7 @@ declare(strict_types = 1);
 namespace App\Model;
 
 use App\Helper\I18nHelper;
+use App\Repository\EditSummaryRepository;
 use DateTime;
 
 /**
@@ -16,17 +17,17 @@ use DateTime;
 class EditSummary extends Model
 {
     /** @var I18nHelper For i18n and l10n. */
-    protected $i18n;
+    protected I18nHelper $i18n;
 
     /** @var int Number of edits from present to consider as 'recent'. */
-    protected $numEditsRecent;
+    protected int $numEditsRecent;
 
     /**
      * Counts of summaries, raw edits, and per-month breakdown.
      * Keys are underscored because this also is served in the API.
      * @var array
      */
-    protected $data = [
+    protected array $data = [
         'recent_edits_minor' => 0,
         'recent_edits_major' => 0,
         'total_edits_minor' => 0,
@@ -43,6 +44,7 @@ class EditSummary extends Model
     /**
      * EditSummary constructor.
      *
+     * @param EditSummaryRepository $repository
      * @param Project $project The project we're working with.
      * @param User $user The user to process.
      * @param int|string $namespace Namespace ID or 'all' for all namespaces.
@@ -51,6 +53,7 @@ class EditSummary extends Model
      * @param int $numEditsRecent Number of edits from present to consider as 'recent'.
      */
     public function __construct(
+        EditSummaryRepository $repository,
         Project $project,
         User $user,
         $namespace,
@@ -58,6 +61,7 @@ class EditSummary extends Model
         $end = false,
         int $numEditsRecent = 150
     ) {
+        $this->repository = $repository;
         $this->project = $project;
         $this->user = $user;
         $this->namespace = $namespace;
@@ -194,7 +198,7 @@ class EditSummary extends Model
     {
         // Do our database work in the Repository, passing in reference
         // to $this->processRow so we can do post-processing here.
-        $ret = $this->getRepository()->prepareData(
+        $ret = $this->repository->prepareData(
             [$this, 'processRow'],
             $this->project,
             $this->user,

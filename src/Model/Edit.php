@@ -7,6 +7,7 @@ declare(strict_types = 1);
 
 namespace App\Model;
 
+use App\Repository\EditRepository;
 use DateTime;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -30,9 +31,6 @@ class Edit extends Model
     /** @var int|string|null The diff size of this edit */
     protected $lengthChange;
 
-    /** @var User - User object of who made the edit */
-    protected $user;
-
     /** @var string The edit summary */
     protected $comment;
 
@@ -47,8 +45,9 @@ class Edit extends Model
      * @param Page $page
      * @param string[] $attrs Attributes, as retrieved by PageRepository::getRevisions()
      */
-    public function __construct(Page $page, array $attrs = [])
+    public function __construct(EditRepository $repository, Page $page, array $attrs = [])
     {
+        $this->repository = $repository;
         $this->page = $page;
 
         // Copy over supported attributes
@@ -84,14 +83,18 @@ class Edit extends Model
      * @param array $revs Each must contain 'page_title' and 'page_namespace'.
      * @return Edit[]
      */
-    public static function getEditsFromRevs(Project $project, User $user, array $revs): array
-    {
-        return array_map(function ($rev) use ($project, $user) {
-            /** @var Page $page Page object to be passed to the Edit constructor. */
+    public static function getEditsFromRevs(
+        EditRepository $repository,
+        Project $project,
+        User $user,
+        array $revs
+    ): array {
+        return array_map(function ($rev) use ($repository, $project, $user) {
+            /** Page object to be passed to the Edit constructor. */
             $page = Page::newFromRow($project, $rev);
             $rev['user'] = $user;
 
-            return new self($page, $rev);
+            return new self($repository, $page, $rev);
         }, $revs);
     }
 
@@ -433,7 +436,7 @@ class Edit extends Model
      */
     public function getDiffHtml(): ?string
     {
-        return $this->getRepository()->getDiffHtml($this);
+        return $this->repository->getDiffHtml($this);
     }
 
     /**

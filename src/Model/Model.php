@@ -21,16 +21,16 @@ abstract class Model
      */
 
     /** @var Repository The repository for this model. */
-    private $repository;
+    protected Repository $repository;
 
     /** @var Project The project. */
-    protected $project;
+    protected Project $project;
 
-    /** @var User The user. */
-    protected $user;
+    /** @var User|null The user. */
+    protected ?User $user;
 
-    /** @var Page the page associated with this edit */
-    protected $page;
+    /** @var Page|null the page associated with this edit */
+    protected ?Page $page;
 
     /** @var int|string Which namespace we are querying for. 'all' for all namespaces. */
     protected $namespace;
@@ -45,7 +45,7 @@ abstract class Model
     protected $offset;
 
     /** @var int Number of rows to fetch. */
-    protected $limit;
+    protected int $limit;
 
     /**
      * Set this model's data repository.
@@ -64,7 +64,7 @@ abstract class Model
     public function getRepository(): Repository
     {
         if (!isset($this->repository)) {
-            $msg = sprintf('Repository for %s must be set before using.', static::class);
+            $msg = sprintf('The $repository property for class %s must be set before using.', static::class);
             throw new Exception($msg);
         }
         return $this->repository;

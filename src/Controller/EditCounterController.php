@@ -86,15 +86,27 @@ class EditCounterController extends XtoolsController
     ) {
         $this->editCounterRepo = $editCounterRepo;
 
-        // Causes the tool to redirect to the Simple Edit Counter if the user has too high of an edit count.
-        $this->tooHighEditCountAction = 'SimpleEditCounterResult';
-
-        // The rightsChanges action is exempt from the edit count limitation.
-        $this->tooHighEditCountActionBlacklist = ['rightsChanges'];
-
         $this->restrictedActions = ['monthCountsApi', 'timecardApi'];
 
         parent::__construct($requestStack, $container, $cache, $guzzle, $i18n, $projectRepo, $userRepo);
+    }
+
+    /**
+     * Causes the tool to redirect to the Simple Edit Counter if the user has too high of an edit count.
+     * @inheritDoc
+     */
+    public function tooHighEditCountRoute(): string
+    {
+        return 'SimpleEditCounterResult';
+    }
+
+    /**
+     * The rightsChanges action is exempt from the edit count limitation.
+     * @inheritDoc
+     */
+    public function tooHighEditCountActionAllowlist(): array
+    {
+        return ['rightsChanges'];
     }
 
     /**
@@ -125,9 +137,10 @@ class EditCounterController extends XtoolsController
 
         // Instantiate EditCounter.
         $this->editCounter = new EditCounter(
+            $this->i18n,
+            $this->userRights,
             $this->project,
-            $this->user,
-            $this->i18n
+            $this->user
         );
         $this->editCounter->setRepository($this->editCounterRepo);
     }

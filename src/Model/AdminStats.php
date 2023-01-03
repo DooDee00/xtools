@@ -7,6 +7,8 @@ declare(strict_types = 1);
 
 namespace App\Model;
 
+use App\Repository\AdminStatsRepository;
+
 /**
  * AdminStats returns information about users with rights defined in admin_stats.yaml.
  */
@@ -33,6 +35,7 @@ class AdminStats extends Model
 
     /**
      * AdminStats constructor.
+     * @param AdminStatsRepository $repository
      * @param Project $project
      * @param int $start as UTC timestamp.
      * @param int $end as UTC timestamp.
@@ -40,12 +43,14 @@ class AdminStats extends Model
      * @param string[] $actions Which actions to query for ('block', 'protect', etc.). Null for all actions.
      */
     public function __construct(
+        AdminStatsRepository $repository,
         Project $project,
         int $start,
         int $end,
         string $group,
         array $actions
     ) {
+        $this->repository = $repository;
         $this->project = $project;
         $this->start = $start;
         $this->end = $end;

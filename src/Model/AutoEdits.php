@@ -7,37 +7,40 @@ declare(strict_types = 1);
 
 namespace App\Model;
 
+use App\Repository\AutoEditsRepository;
+
 /**
  * AutoEdits returns statistics about automated edits made by a user.
  */
 class AutoEdits extends Model
 {
     /** @var null|string The tool we're searching for when fetching (semi-)automated edits. */
-    protected $tool;
+    protected ?string $tool;
 
     /** @var Edit[] The list of non-automated contributions. */
-    protected $nonAutomatedEdits;
+    protected array $nonAutomatedEdits;
 
     /** @var Edit[] The list of automated contributions. */
-    protected $automatedEdits;
+    protected array $automatedEdits;
 
     /** @var int Total number of edits. */
-    protected $editCount;
+    protected int $editCount;
 
     /** @var int Total number of non-automated edits. */
-    protected $automatedCount;
+    protected int $automatedCount;
 
     /** @var array Counts of known automated tools used by the given user. */
-    protected $toolCounts;
+    protected array $toolCounts;
 
     /** @var int Total number of edits made with the tools. */
-    protected $toolsTotal;
+    protected int $toolsTotal;
 
     /** @var int Default number of results to show per page when fetching (non-)automated edits. */
     public const RESULTS_PER_PAGE = 50;
 
     /**
      * Constructor for the AutoEdits class.
+     * @param AutoEditsRepository $repository
      * @param Project $project
      * @param User $user
      * @param int|string $namespace Namespace ID or 'all'
@@ -48,6 +51,7 @@ class AutoEdits extends Model
      * @param int|null $limit Number of results to return.
      */
     public function __construct(
+        AutoEditsRepository $repository,
         Project $project,
         User $user,
         $namespace = 0,
@@ -57,6 +61,7 @@ class AutoEdits extends Model
         $offset = false,
         ?int $limit = self::RESULTS_PER_PAGE
     ) {
+        $this->repository = $repository;
         $this->project = $project;
         $this->user = $user;
         $this->namespace = $namespace;
@@ -83,7 +88,7 @@ class AutoEdits extends Model
      */
     public function getEditCount(): int
     {
-        if (!is_int($this->editCount)) {
+        if (!isset($this->editCount)) {
             $this->editCount = $this->user->countEdits(
                 $this->project,
                 $this->namespace,
@@ -102,11 +107,11 @@ class AutoEdits extends Model
      */
     public function getAutomatedCount(): int
     {
-        if (is_int($this->automatedCount)) {
+        if (isset($this->automatedCount)) {
             return $this->automatedCount;
         }
 
-        $this->automatedCount = (int)$this->getRepository()->countAutomatedEdits(
+        $this->automatedCount = $this->repository->countAutomatedEdits(
             $this->project,
             $this->user,
             $this->namespace,
@@ -133,13 +138,13 @@ class AutoEdits extends Model
      * @param bool $raw Wether to return raw data from the database, or get Edit objects.
      * @return string[]|Edit[]
      */
-    public function getNonAutomatedEdits(bool $raw = false)
+    public function getNonAutomatedEdits(bool $raw = false): array
     {
-        if (is_array($this->nonAutomatedEdits)) {
+        if (isset($this->nonAutomatedEdits)) {
             return $this->nonAutomatedEdits;
         }
 
-        $revs = $this->getRepository()->getNonAutomatedEdits(
+        $revs = $this->repository->getNonAutomatedEdits(
             $this->project,
             $this->user,
             $this->namespace,
@@ -165,11 +170,11 @@ class AutoEdits extends Model
      */
     public function getAutomatedEdits(bool $raw = false): array
     {
-        if (is_array($this->automatedEdits)) {
+        if (isset($this->automatedEdits)) {
             return $this->automatedEdits;
         }
 
-        $revs = $this->getRepository()->getAutomatedEdits(
+        $revs = $this->repository->getAutomatedEdits(
             $this->project,
             $this->user,
             $this->namespace,
@@ -200,11 +205,11 @@ class AutoEdits extends Model
      */
     public function getToolCounts(): array
     {
-        if (is_array($this->toolCounts)) {
+        if (isset($this->toolCounts)) {
             return $this->toolCounts;
         }
 
-        $this->toolCounts = $this->getRepository()->getToolCounts(
+        $this->toolCounts = $this->repository->getToolCounts(
             $this->project,
             $this->user,
             $this->namespace,
@@ -221,7 +226,7 @@ class AutoEdits extends Model
      */
     public function getAllTools(): array
     {
-        return $this->getRepository()->getTools($this->project);
+        return $this->repository->getTools($this->project);
     }
 
     /**
@@ -231,7 +236,7 @@ class AutoEdits extends Model
      */
     public function getToolsTotal(): int
     {
-        if (!is_int($this->toolsTotal)) {
+        if (!isset($this->toolsTotal)) {
             $this->toolsTotal = array_reduce($this->getToolCounts(), function ($a, $b) {
                 return $a + $b['count'];
             });

@@ -9,6 +9,10 @@ namespace App\Repository;
 
 use App\Model\Page;
 use App\Model\Project;
+use GuzzleHttp\Client;
+use Psr\Cache\CacheItemPoolInterface;
+use Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
 
 /**
  * An PageAssessmentsRepository is responsible for retrieving page assessment
@@ -17,6 +21,9 @@ use App\Model\Project;
  */
 class PageAssessmentsRepository extends Repository
 {
+    /** @var array The assessments config. */
+    protected array $assessments;
+
     /**
      * Get page assessments configuration for the Project.
      * @param Project $project
@@ -24,15 +31,17 @@ class PageAssessmentsRepository extends Repository
      */
     public function getConfig(Project $project)
     {
-        $projectsConfig = $this->container->getParameter('assessments');
-        return $projectsConfig[$project->getDomain()] ?? false;
+        if (!isset($this->assessments)) {
+            $this->assessments = $this->container->get('parameter_bag')->get('assessments');
+        }
+        return $this->assessments[$project->getDomain()] ?? false;
     }
 
     /**
      * Get assessment data for the given pages
      * @param Page $page
      * @param bool $first Fetch only the first result, not for each WikiProject.
-     * @return string[] Assessment data as retrieved from the database.
+     * @return string[][] Assessment data as retrieved from the database.
      */
     public function getAssessments(Page $page, bool $first = false): array
     {

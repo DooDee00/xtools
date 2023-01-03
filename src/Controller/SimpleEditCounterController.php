@@ -59,13 +59,13 @@ class SimpleEditCounterController extends XtoolsController
     private function prepareSimpleEditCounter(SimpleEditCounterRepository $simpleEditCounterRepo): SimpleEditCounter
     {
         $sec = new SimpleEditCounter(
+            $simpleEditCounterRepo,
             $this->project,
             $this->user,
             $this->namespace,
             $this->start,
             $this->end
         );
-        $sec->setRepository($simpleEditCounterRepo);
         $sec->prepareData();
 
         if ($sec->isLimited()) {

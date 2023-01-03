@@ -23,14 +23,25 @@ use Wikimedia\IPUtils;
 class EditCounterRepository extends Repository
 {
     /** @var ProjectRepository */
-    protected $projectRepo;
+    protected ProjectRepository $projectRepo;
 
     /** @var UserRightsRepository */
-    protected $userRightsRepo;
+    protected UserRightsRepository $userRightsRepo;
 
     /** @var AutoEditsRepository */
-    protected $autoEditsRepo;
+    protected AutoEditsRepository $autoEditsRepo;
 
+    /**
+     * @param ContainerInterface $container
+     * @param CacheItemPoolInterface $cache
+     * @param Client $guzzle
+     * @param LoggerInterface $logger
+     * @param ProjectRepository $projectRepo
+     * @param UserRightsRepository $userRightsRepo
+     * @param AutoEditsRepository $autoEditsRepo
+     * @param bool $isWMF
+     * @param int $queryTimeout
+     */
     public function __construct(
         ContainerInterface $container,
         CacheItemPoolInterface $cache,
@@ -502,7 +513,7 @@ class EditCounterRepository extends Repository
      * Get data for the timecard chart, with totals grouped by day and to the nearest two-hours.
      * @param Project $project
      * @param User $user
-     * @return string[]
+     * @return string[][]
      */
     public function getTimeCard(Project $project, User $user): array
     {
@@ -593,11 +604,10 @@ class EditCounterRepository extends Repository
      * @param Project $project
      * @param User $user
      * @return int Result of query, see below.
+     * @deprecated Inject AutoEditsRepository and call the countAutomatedEdits directly.
      */
     public function countAutomatedEdits(Project $project, User $user): int
     {
-        $autoEditsRepo = new AutoEditsRepository();
-        $autoEditsRepo->setContainer($this->container);
-        return $autoEditsRepo->countAutomatedEdits($project, $user);
+        return $this->autoEditsRepo->countAutomatedEdits($project, $user);
     }
 }

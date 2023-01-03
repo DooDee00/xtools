@@ -43,7 +43,7 @@ class CategoryEditsController extends XtoolsController
      * Will redirect back to index if the user has too high of an edit count.
      * @return string
      */
-    public function tooHighEditCountAction(): string
+    public function tooHighEditCountRoute(): string
     {
         return $this->getIndexRoute();
     }

@@ -7,6 +7,8 @@ declare(strict_types = 1);
 
 namespace App\Model;
 
+use App\Repository\PageAssessmentsRepository;
+
 /**
  * A Project is a single wiki that XTools is querying.
  */
@@ -37,7 +39,7 @@ class Project extends Model
     public function __construct(string $nameOrUrl)
     {
         $this->nameUnnormalized = $nameOrUrl;
-        $this->pageAssessments = new PageAssessments($this);
+//        $this->pageAssessments = new PageAssessments($this);
     }
 
     /**

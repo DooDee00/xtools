@@ -231,7 +231,7 @@ class TopEditsRepository extends UserRepository
      * @param User $user
      * @param int|false $start Start date as Unix timestamp.
      * @param int|false $end End date as Unix timestamp.
-     * @return string[] Each row with keys 'id', 'timestamp', 'minor', 'length',
+     * @return string[][] Each row with keys 'id', 'timestamp', 'minor', 'length',
      *   'length_change', 'reverted', 'user_id', 'username', 'comment', 'parent_comment'
      */
     public function getTopEditsPage(Page $page, User $user, $start = false, $end = false): array
