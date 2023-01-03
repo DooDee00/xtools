@@ -7,13 +7,11 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Helper\I18nHelper;
+use App\Helper\AutomatedEditsHelper;
 use App\Model\AutoEdits;
 use App\Repository\AutoEditsRepository;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
-use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
@@ -40,18 +38,13 @@ class AutomatedEditsController extends XtoolsController
     }
 
     /**
-     * AutomatedEditsController constructor.
-     * @param RequestStack $requestStack
-     * @param ContainerInterface $container
-     * @param I18nHelper $i18n
+     * This causes the tool to redirect back to the index page, with an error,
+     * if the user has too high of an edit count.
+     * @return string
      */
-    public function __construct(RequestStack $requestStack, ContainerInterface $container, I18nHelper $i18n)
+    public function tooHighEditCountAction(): string
     {
-        // This will cause the tool to redirect back to the index page, with an error,
-        // if the user has too high of an edit count.
-        $this->tooHighEditCountAction = $this->getIndexRoute();
-
-        parent::__construct($requestStack, $container, $i18n);
+        return $this->getIndexRoute();
     }
 
     /**
@@ -232,15 +225,14 @@ class AutomatedEditsController extends XtoolsController
      * Get a list of the automated tools and their regex/tags/etc.
      * @Route("/api/user/automated_tools/{project}", name="UserApiAutoEditsTools")
      * @Route("/api/project/automated_tools/{project}", name="ProjectApiAutoEditsTools")
+     * @param AutomatedEditsHelper $autoEditsHelper
      * @return JsonResponse
      * @codeCoverageIgnore
      */
-    public function automatedToolsApiAction(): JsonResponse
+    public function automatedToolsApiAction(AutomatedEditsHelper $autoEditsHelper): JsonResponse
     {
         $this->recordApiUsage('user/automated_tools');
-
-        $aeh = $this->container->get('app.automated_edits_helper');
-        return $this->getFormattedApiResponse($aeh->getTools($this->project));
+        return $this->getFormattedApiResponse($autoEditsHelper->getTools($this->project));
     }
 
     /**

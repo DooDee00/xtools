@@ -126,13 +126,6 @@ abstract class XtoolsController extends AbstractController
         'XtoolsProject' => null,
     ];
 
-    /**
-     * This activates the 'too high edit count' functionality. This property represents the
-     * action that should be redirected to if the user has too high of an edit count.
-     * @var string
-     */
-    protected $tooHighEditCountAction;
-
     /** @var array Actions that are exempt from edit count limitations. */
     protected $tooHighEditCountActionBlacklist = [];
 
@@ -156,6 +149,16 @@ abstract class XtoolsController extends AbstractController
      * @return string
      */
     abstract protected function getIndexRoute(): string;
+
+    /**
+     * Override this to activate the 'too high edit count' functionality. The return value
+     * should represent the action that should be redirected to if the user has too high of an edit count.
+     * @return string|null Name of action to redirect to.
+     */
+    protected function tooHighEditCountAction(): ?string
+    {
+        return null;
+    }
 
     /**
      * XtoolsController constructor.
@@ -494,14 +497,14 @@ abstract class XtoolsController extends AbstractController
         }
 
         // Reject users with a crazy high edit count.
-        if (isset($this->tooHighEditCountAction) &&
+        if ($this->tooHighEditCountAction() &&
             !in_array($this->controllerAction, $this->tooHighEditCountActionBlacklist) &&
             $user->hasTooManyEdits($this->project)
         ) {
             /** TODO: Somehow get this to use self::throwXtoolsException */
 
             // If redirecting to a different controller, show an informative message accordingly.
-            if ($this->tooHighEditCountAction !== $this->getIndexRoute()) {
+            if ($this->tooHighEditCountAction() !== $this->getIndexRoute()) {
                 // FIXME: This is currently only done for Edit Counter, redirecting to Simple Edit Counter,
                 //   so this bit is hardcoded. We need to instead give the i18n key of the route.
                 $redirMsg = $this->i18n->msg('too-many-edits-redir', [
@@ -528,7 +531,7 @@ abstract class XtoolsController extends AbstractController
 
             throw new XtoolsHttpException(
                 'User has made too many edits! Maximum '.$user->maxEdits(),
-                $this->generateUrl($this->tooHighEditCountAction, $this->params),
+                $this->generateUrl($this->tooHighEditCountAction(), $this->params),
                 $originalParams,
                 $this->isApi
             );
