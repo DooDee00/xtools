@@ -15,8 +15,11 @@ use DateTime;
 /**
  * An EditCounter provides statistics about a user's edits on a project.
  */
-class EditCounter extends UserRights
+class EditCounter extends Model
 {
+    /** @var UserRights */
+    protected UserRights $userRights;
+
     /** @var int[] Revision and page counts etc. */
     protected $pairData;
 
@@ -66,11 +69,12 @@ class EditCounter extends UserRights
      * @param User $user
      * @param I18nHelper $i18n
      */
-    public function __construct(Project $project, User $user, I18nHelper $i18n)
+    public function __construct(Project $project, User $user, I18nHelper $i18n, UserRights $userRights)
     {
         $this->project = $project;
         $this->user = $user;
         $this->i18n = $i18n;
+        $this->userRights = $userRights;
     }
 
     /**

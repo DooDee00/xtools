@@ -157,7 +157,7 @@ abstract class Model
      */
     public function getLimit(): int
     {
-        return (int)$this->limit;
+        return $this->limit;
     }
 
     /**

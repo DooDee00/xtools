@@ -48,7 +48,6 @@ class SimpleEditCounterController extends XtoolsController
             'xtPageTitle' => 'tool-simpleeditcounter',
             'xtSubtitle' => 'tool-simpleeditcounter-desc',
             'xtPage' => 'SimpleEditCounter',
-            'project' => $this->project,
 
             // Defaults that will get overridden if in $params.
             'namespace' => 'all',
@@ -57,7 +56,7 @@ class SimpleEditCounterController extends XtoolsController
         ], $this->params, ['project' => $this->project]));
     }
 
-    private function prepareSimpleEditCounter(): SimpleEditCounter
+    private function prepareSimpleEditCounter(SimpleEditCounterRepository $simpleEditCounterRepo): SimpleEditCounter
     {
         $sec = new SimpleEditCounter(
             $this->project,
@@ -66,9 +65,7 @@ class SimpleEditCounterController extends XtoolsController
             $this->start,
             $this->end
         );
-        $secRepo = new SimpleEditCounterRepository();
-        $secRepo->setContainer($this->container);
-        $sec->setRepository($secRepo);
+        $sec->setRepository($simpleEditCounterRepo);
         $sec->prepareData();
 
         if ($sec->isLimited()) {
@@ -98,9 +95,9 @@ class SimpleEditCounterController extends XtoolsController
      * @return Response
      * @codeCoverageIgnore
      */
-    public function resultAction(): Response
+    public function resultAction(SimpleEditCounterRepository $simpleEditCounterRepo): Response
     {
-        $sec = $this->prepareSimpleEditCounter();
+        $sec = $this->prepareSimpleEditCounter($simpleEditCounterRepo);
 
         return $this->getFormattedResponse('simpleEditCounter/result', [
             'xtPage' => 'SimpleEditCounter',
@@ -131,9 +128,9 @@ class SimpleEditCounterController extends XtoolsController
      * @return Response
      * @codeCoverageIgnore
      */
-    public function simpleEditCounterApiAction(): Response
+    public function simpleEditCounterApiAction(SimpleEditCounterRepository $simpleEditCounterRepository): Response
     {
-        $sec = $this->prepareSimpleEditCounter();
+        $sec = $this->prepareSimpleEditCounter($simpleEditCounterRepository);
         $data = $sec->getData();
         if ($this->user->isIpRange()) {
             unset($data['deleted_edit_count']);

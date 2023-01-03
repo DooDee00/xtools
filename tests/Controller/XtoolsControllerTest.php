@@ -60,7 +60,7 @@ class XtoolsControllerTest extends ControllerTestAdapter
     public function testParseQueryParams(array $params, array $expected): void
     {
         // Untestable in CI build :(
-        if (!self::$container->getParameter('app.is_labs')) {
+        if (!self::$container->getParameter('app.is_wmf')) {
             return;
         }
 
@@ -181,7 +181,7 @@ class XtoolsControllerTest extends ControllerTestAdapter
     public function testProjectFromQuery(): void
     {
         // Untestable on Travis :(
-        if (!self::$container->getParameter('app.is_labs')) {
+        if (!self::$container->getParameter('app.is_wmf')) {
             return;
         }
 
@@ -204,7 +204,7 @@ class XtoolsControllerTest extends ControllerTestAdapter
     public function testValidateProjectAndUser(): void
     {
         // Untestable on Travis :(
-        if (!self::$container->getParameter('app.is_labs')) {
+        if (!self::$container->getParameter('app.is_wmf')) {
             return;
         }
 
@@ -237,7 +237,7 @@ class XtoolsControllerTest extends ControllerTestAdapter
     public function testGetParams(): void
     {
         // Untestable on Travis :(
-        if (!self::$container->getParameter('app.is_labs')) {
+        if (!self::$container->getParameter('app.is_wmf')) {
             return;
         }
 
@@ -263,7 +263,7 @@ class XtoolsControllerTest extends ControllerTestAdapter
     public function testValidatePage(): void
     {
         // Untestable on Travis :(
-        if (!self::$container->getParameter('app.is_labs')) {
+        if (!self::$container->getParameter('app.is_wmf')) {
             return;
         }
 
@@ -347,7 +347,7 @@ class XtoolsControllerTest extends ControllerTestAdapter
         );
 
         // For now...
-        if (!self::$container->getParameter('app.is_labs')) {
+        if (!self::$container->getParameter('app.is_wmf')) {
             return;
         }
 

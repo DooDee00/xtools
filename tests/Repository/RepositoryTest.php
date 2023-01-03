@@ -39,7 +39,7 @@ class RepositoryTest extends TestAdapter
      */
     public function testGetTableName(): void
     {
-        if ($this->localContainer->getParameter('app.is_labs')) {
+        if ($this->localContainer->getParameter('app.is_wmf')) {
             // When using Labs.
             static::assertEquals('`testwiki_p`.`page`', $this->stub->getTableName('testwiki', 'page'));
             static::assertEquals('`testwiki_p`.`logging_userindex`', $this->stub->getTableName('testwiki', 'logging'));

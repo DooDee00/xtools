@@ -49,6 +49,9 @@ class AppExtension extends AbstractExtension
     /** @var ProjectRepository */
     protected $projectRepo;
 
+    /** @var bool */
+    protected $isWMF;
+
     /**
      * Constructor, with the I18nHelper through dependency injection.
      * @param ContainerInterface $container
@@ -63,7 +66,8 @@ class AppExtension extends AbstractExtension
         SessionInterface $session,
         I18nHelper $i18n,
         UrlGeneratorInterface $generator,
-        ProjectRepository $projectRepo
+        ProjectRepository $projectRepo,
+        bool $isWMF
     ) {
         $this->container = $container;
         $this->requestStack = $requestStack;
@@ -71,6 +75,7 @@ class AppExtension extends AbstractExtension
         $this->i18n = $i18n;
         $this->urlGenerator = $generator;
         $this->projectRepo = $projectRepo;
+        $this->isWMF = $isWMF;
     }
 
     /*********************************** FUNCTIONS ***********************************/
@@ -439,8 +444,8 @@ class AppExtension extends AbstractExtension
     public function isWMFLabs(): bool
     {
         $param = false;
-        if ($this->container->hasParameter('app.is_labs')) {
-            $param = boolval($this->container->getParameter('app.is_labs'));
+        if ($this->container->hasParameter('app.is_wmf')) {
+            $param = boolval($this->container->getParameter('app.is_wmf'));
         }
         return $param;
     }
@@ -469,8 +474,7 @@ class AppExtension extends AbstractExtension
     {
         // Don't show if Quote is turned off, but always show for Labs
         // (so quote is in footer but not in nav).
-        $isLabs = $this->container->getParameter('app.is_labs');
-        if (!$isLabs && !$this->container->getParameter('enable.Quote')) {
+        if (!$this->isWMF && !$this->container->getParameter('enable.Quote')) {
             return '';
         }
         $quotes = $this->container->getParameter('quotes');

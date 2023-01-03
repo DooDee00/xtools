@@ -520,8 +520,8 @@ class EditCounterController extends XtoolsController
             'ec' => $this->editCounter,
         ];
 
-        if ((bool)$this->container->hasParameter('app.is_labs')) {
-            $ret['metaProject'] = ProjectRepository::getProject('metawiki', $this->container);
+        if ($this->container->hasParameter('app.is_wmf')) {
+            $ret['metaProject'] = $this->projectRepo->getProject('metawiki');
         }
 
         // Output the relevant format template.

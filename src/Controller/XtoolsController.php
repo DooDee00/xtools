@@ -36,6 +36,8 @@ use Wikimedia\IPUtils;
  */
 abstract class XtoolsController extends AbstractController
 {
+    /** DEPENDENCIES */
+
     /** @var CacheItemPoolInterface */
     protected $cache;
 
@@ -50,6 +52,8 @@ abstract class XtoolsController extends AbstractController
 
     /** @var UserRepository */
     protected $userRepo;
+
+    /** OTHER CLASS PROPERTIES */
 
     /** @var Request The request object. */
     protected $request;
@@ -410,16 +414,15 @@ abstract class XtoolsController extends AbstractController
         } elseif (null !== $this->cookies['XtoolsProject']) {
             $project = $this->cookies['XtoolsProject'];
         } else {
-            $project = $this->container->getParameter('default_project');
+            $project = $this->getParameter('default_project');
         }
 
-        $projectData = ProjectRepository::getProject($project, $this->container);
+        $projectData = $this->projectRepo->getProject($project);
 
         // Revert back to defaults if we've established the given project was invalid.
         if (!$projectData->exists()) {
-            $projectData = ProjectRepository::getProject(
-                $this->container->getParameter('default_project'),
-                $this->container
+            $projectData = $this->projectRepo->getProject(
+                $this->getParameter('default_project')
             );
         }
 
@@ -786,7 +789,7 @@ abstract class XtoolsController extends AbstractController
             $params['project'] = rtrim(ltrim($params['wiki'], '.'), '.org').'.org';
 
             /** @var string[] $languagelessProjects Projects for which there is no specific language association. */
-            $languagelessProjects = $this->container->getParameter('app.multilingual_wikis');
+            $languagelessProjects = $this->getParameter('app.multilingual_wikis');
 
             // Prepend language if applicable.
             if (isset($params['lang']) && !in_array($params['wiki'], $languagelessProjects)) {

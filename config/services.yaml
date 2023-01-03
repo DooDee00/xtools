@@ -67,7 +67,6 @@ services:
          # you can exclude directories or files
          # but if a service is unused, it's removed anyway
          exclude:
-            - '../src/{Model}'
             - '../src/Kernel.php'
             - '../src/DoctrineMigrations/'
 
@@ -81,8 +80,13 @@ services:
     App\Repository\:
         resource: '../src/Repository'
         arguments:
-            $isWMF: '%app.is_wmf%'
+            $isWMF: '%env(bool:APP_IS_WMF)%'
             $queryTimeout: '%app.query_timeout%'
+
+    App\Twig\:
+        resource: '../src/Twig'
+        arguments:
+            $isWMF: '%env(bool:APP_IS_WMF)%'
 
     app.monolog.processor.web:
         class: App\Monolog\WebProcessorMonolog

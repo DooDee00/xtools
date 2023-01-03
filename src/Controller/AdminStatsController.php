@@ -123,9 +123,9 @@ class AdminStatsController extends XtoolsController
     {
         if ('meta.wikimedia.org' !== $this->project->getDomain() &&
             'steward' === $group &&
-            $this->getParameter('app.is_labs')
+            $this->getParameter('app.is_wmf')
         ) {
-            $this->project = ProjectRepository::getProject('meta.wikimedia.org', $this->container);
+            $this->project = $this->projectRepo->getProject('meta.wikimedia.org');
         }
 
         return $this->project;

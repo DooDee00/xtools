@@ -8,7 +8,6 @@ declare(strict_types = 1);
 namespace App\Model;
 
 use App\Helper\I18nHelper;
-use App\Repository\UserRightsRepository;
 use DateInterval;
 use DateTimeImmutable;
 use Exception;
@@ -32,10 +31,6 @@ class UserRights extends Model
 
     /** @var array The current and former rights of the user. */
     protected $rightsStates = [];
-
-    public function __construct(UserRightsRepository )
-    {
-    }
 
     /**
      * Get user rights changes of the given user.

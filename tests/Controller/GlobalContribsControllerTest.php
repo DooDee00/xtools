@@ -14,7 +14,7 @@ class GlobalContribsControllerTest extends ControllerTestAdapter
      */
     public function testRoutes(): void
     {
-        if (!self::$container->getParameter('app.is_labs')) {
+        if (!self::$container->getParameter('app.is_wmf')) {
             return;
         }
 
