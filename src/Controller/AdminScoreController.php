@@ -56,10 +56,8 @@ class AdminScoreController extends XtoolsController
      * @return Response
      * @codeCoverageIgnore
      */
-    public function resultAction(): Response
+    public function resultAction(AdminScoreRepository $adminScoreRepo): Response
     {
-        $adminScoreRepo = new AdminScoreRepository();
-        $adminScoreRepo->setContainer($this->container);
         $adminScore = new AdminScore($this->project, $this->user);
         $adminScore->setRepository($adminScoreRepo);
 
