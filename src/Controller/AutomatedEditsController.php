@@ -101,7 +101,7 @@ class AutomatedEditsController extends XtoolsController
      * Set defaults, and instantiate the AutoEdits model. This is called at the top of every view action.
      * @codeCoverageIgnore
      */
-    private function setupAutoEdits(): void
+    private function setupAutoEdits(AutoEditsRepository $autoEditsRepo): void
     {
         $tool = $this->request->query->get('tool', null);
         $useSandbox = (bool)$this->request->query->get('usesandbox', false);
@@ -110,9 +110,7 @@ class AutomatedEditsController extends XtoolsController
             $this->addFlashMessage('danger', 'auto-edits-logged-out');
             $useSandbox = false;
         }
-
-        $autoEditsRepo = new AutoEditsRepository($useSandbox);
-        $autoEditsRepo->setContainer($this->container);
+        $autoEditsRepo->setUseSandbox($useSandbox);
 
         $misconfigured = $autoEditsRepo->getInvalidTools($this->project);
         $helpLink = "https://w.wiki/ppr";
@@ -168,10 +166,10 @@ class AutomatedEditsController extends XtoolsController
      * @return Response
      * @codeCoverageIgnore
      */
-    public function resultAction(): Response
+    public function resultAction(AutoEditsRepository $autoEditsRepo): Response
     {
         // Will redirect back to index if the user has too high of an edit count.
-        $this->setupAutoEdits();
+        $this->setupAutoEdits($autoEditsRepo);
 
         if (in_array('bot', $this->user->getUserRights($this->project))) {
             $this->addFlashMessage('warning', 'auto-edits-bot');
@@ -197,9 +195,9 @@ class AutomatedEditsController extends XtoolsController
      * @return Response|RedirectResponse
      * @codeCoverageIgnore
      */
-    public function nonAutomatedEditsAction(): Response
+    public function nonAutomatedEditsAction(AutoEditsRepository $autoEditsRepo): Response
     {
-        $this->setupAutoEdits();
+        $this->setupAutoEdits($autoEditsRepo);
 
         return $this->getFormattedResponse('autoEdits/nonautomated_edits', $this->output);
     }
@@ -221,9 +219,9 @@ class AutomatedEditsController extends XtoolsController
      * @return Response
      * @codeCoverageIgnore
      */
-    public function automatedEditsAction(): Response
+    public function automatedEditsAction(AutoEditsRepository $autoEditsRepo): Response
     {
-        $this->setupAutoEdits();
+        $this->setupAutoEdits($autoEditsRepo);
 
         return $this->getFormattedResponse('autoEdits/automated_edits', $this->output);
     }
@@ -261,11 +259,11 @@ class AutomatedEditsController extends XtoolsController
      * @return JsonResponse
      * @codeCoverageIgnore
      */
-    public function automatedEditCountApiAction(): JsonResponse
+    public function automatedEditCountApiAction(AutoEditsRepository $autoEditsRepo): JsonResponse
     {
         $this->recordApiUsage('user/automated_editcount');
 
-        $this->setupAutoEdits();
+        $this->setupAutoEdits($autoEditsRepo);
 
         $ret = [
             'total_editcount' => $this->autoEdits->getEditCount(),
@@ -298,11 +296,11 @@ class AutomatedEditsController extends XtoolsController
      * @return JsonResponse
      * @codeCoverageIgnore
      */
-    public function nonAutomatedEditsApiAction(): JsonResponse
+    public function nonAutomatedEditsApiAction(AutoEditsRepository $autoEditsRepo): JsonResponse
     {
         $this->recordApiUsage('user/nonautomated_edits');
 
-        $this->setupAutoEdits();
+        $this->setupAutoEdits($autoEditsRepo);
 
         $out = $this->addFullPageTitlesAndContinue(
             'nonautomated_edits',
@@ -330,11 +328,11 @@ class AutomatedEditsController extends XtoolsController
      * @return Response
      * @codeCoverageIgnore
      */
-    public function automatedEditsApiAction(): Response
+    public function automatedEditsApiAction(AutoEditsRepository $autoEditsRepo): Response
     {
         $this->recordApiUsage('user/automated_edits');
 
-        $this->setupAutoEdits();
+        $this->setupAutoEdits($autoEditsRepo);
 
         $extras = $this->autoEdits->getTool()
             ? ['tool' => $this->autoEdits->getTool()]

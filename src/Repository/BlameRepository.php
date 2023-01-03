@@ -5,7 +5,7 @@ namespace App\Repository;
 
 use App\Model\Edit;
 use App\Model\Page;
-use Symfony\Component\DependencyInjection\ContainerInterface;
+use Psr\Container\ContainerInterface;
 
 /**
  * BlameRepository is responsible for retrieving authorship data about a single page.

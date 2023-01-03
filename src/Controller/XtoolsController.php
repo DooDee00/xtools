@@ -17,8 +17,10 @@ use App\Repository\ProjectRepository;
 use App\Repository\UserRepository;
 use DateTime;
 use Doctrine\DBAL\Exception;
-use Symfony\Bundle\FrameworkBundle\Controller\Controller;
-use Symfony\Component\DependencyInjection\ContainerInterface;
+use GuzzleHttp\Client;
+use Psr\Cache\CacheItemPoolInterface;
+use Psr\Container\ContainerInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -32,10 +34,22 @@ use Wikimedia\IPUtils;
  * Project/User instances. These are used in other controllers in the App\Controller namespace.
  * @abstract
  */
-abstract class XtoolsController extends Controller
+abstract class XtoolsController extends AbstractController
 {
+    /** @var CacheItemPoolInterface */
+    protected $cache;
+
+    /** @var Client */
+    protected $guzzle;
+
     /** @var I18nHelper i18n helper. */
     protected $i18n;
+
+    /** @var ProjectRepository */
+    protected $projectRepo;
+
+    /** @var UserRepository */
+    protected $userRepo;
 
     /** @var Request The request object. */
     protected $request;
@@ -143,13 +157,26 @@ abstract class XtoolsController extends Controller
      * XtoolsController constructor.
      * @param RequestStack $requestStack
      * @param ContainerInterface $container
+     * @param CacheItemPoolInterface $cache
+     * @param Client $guzzle
      * @param I18nHelper $i18n
      */
-    public function __construct(RequestStack $requestStack, ContainerInterface $container, I18nHelper $i18n)
-    {
+    public function __construct(
+        RequestStack $requestStack,
+        ContainerInterface $container,
+        CacheItemPoolInterface $cache,
+        Client $guzzle,
+        I18nHelper $i18n,
+        ProjectRepository $projectRepo,
+        UserRepository $userRepo
+    ) {
         $this->request = $requestStack->getCurrentRequest();
         $this->container = $container;
+        $this->cache = $cache;
+        $this->guzzle = $guzzle;
         $this->i18n = $i18n;
+        $this->projectRepo = $projectRepo;
+        $this->userRepo = $userRepo;
         $this->params = $this->parseQueryParams();
 
         // Parse out the name of the controller and action.
@@ -411,8 +438,7 @@ abstract class XtoolsController extends Controller
      */
     public function validateProject(string $projectQuery): Project
     {
-        /** @var Project $project */
-        $project = ProjectRepository::getProject($projectQuery, $this->container);
+        $project = $this->projectRepo->getProject($projectQuery);
 
         // Check if it is an explicitly allowed project for the current tool.
         if (isset($this->supportedProjects) && !in_array($project->getDomain(), $this->supportedProjects)) {
@@ -444,7 +470,7 @@ abstract class XtoolsController extends Controller
      */
     public function validateUser(string $username): User
     {
-        $user = UserRepository::getUser($username, $this->container);
+        $user = $this->userRepo->getUser($username);
 
         // Allow querying for any IP, currently with no edit count limitation...
         // Once T188677 is resolved IPs will be affected by the EXPLAIN results.

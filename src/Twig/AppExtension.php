@@ -44,7 +44,10 @@ class AppExtension extends AbstractExtension
     protected $requestTime;
 
     /** @var UrlGeneratorInterface */
-    private $urlGenerator;
+    protected $urlGenerator;
+
+    /** @var ProjectRepository */
+    protected $projectRepo;
 
     /**
      * Constructor, with the I18nHelper through dependency injection.
@@ -59,13 +62,15 @@ class AppExtension extends AbstractExtension
         RequestStack $requestStack,
         SessionInterface $session,
         I18nHelper $i18n,
-        UrlGeneratorInterface $generator
+        UrlGeneratorInterface $generator,
+        ProjectRepository $projectRepo
     ) {
         $this->container = $container;
         $this->requestStack = $requestStack;
         $this->session = $session;
         $this->i18n = $i18n;
         $this->urlGenerator = $generator;
+        $this->projectRepo = $projectRepo;
     }
 
     /*********************************** FUNCTIONS ***********************************/
@@ -151,7 +156,7 @@ class AppExtension extends AbstractExtension
 
     /**
      * See if a given i18n message exists.
-     * @param string $message The message.
+     * @param string|null $message The message.
      * @param string[] $vars
      * @return bool
      */
@@ -162,7 +167,7 @@ class AppExtension extends AbstractExtension
 
     /**
      * Get an i18n message if it exists, otherwise just get the message key.
-     * @param string $message
+     * @param string|null $message
      * @param string[] $vars
      * @return string
      */
@@ -448,7 +453,7 @@ class AppExtension extends AbstractExtension
     public function replag(): int
     {
         $projectIdent = $this->getRequest()->get('project', 'enwiki');
-        $project = ProjectRepository::getProject($projectIdent, $this->container);
+        $project = $this->projectRepo->getProject($projectIdent);
         $dbName = $project->getDatabaseName();
         $sql = "SELECT lag FROM `heartbeat_p`.`heartbeat`";
         return (int)$project->getRepository()->executeProjectsQuery($project, $sql, [

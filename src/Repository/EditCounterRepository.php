@@ -9,6 +9,10 @@ namespace App\Repository;
 
 use App\Model\Project;
 use App\Model\User;
+use GuzzleHttp\Client;
+use Psr\Cache\CacheItemPoolInterface;
+use Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
 use Wikimedia\IPUtils;
 
 /**
@@ -16,8 +20,34 @@ use Wikimedia\IPUtils;
  * databases and API. It doesn't do any post-processing of that information.
  * @codeCoverageIgnore
  */
-class EditCounterRepository extends UserRightsRepository
+class EditCounterRepository extends Repository
 {
+    /** @var ProjectRepository */
+    protected $projectRepo;
+
+    /** @var UserRightsRepository */
+    protected $userRightsRepo;
+
+    /** @var AutoEditsRepository */
+    protected $autoEditsRepo;
+
+    public function __construct(
+        ContainerInterface $container,
+        CacheItemPoolInterface $cache,
+        Client $guzzle,
+        LoggerInterface $logger,
+        ProjectRepository $projectRepo,
+        UserRightsRepository $userRightsRepo,
+        AutoEditsRepository $autoEditsRepo,
+        bool $isWMF,
+        int $queryTimeout
+    ) {
+        $this->projectRepo = $projectRepo;
+        $this->userRightsRepo = $userRightsRepo;
+        $this->autoEditsRepo = $autoEditsRepo;
+        parent::__construct($container, $cache, $guzzle, $logger, $isWMF, $queryTimeout);
+    }
+
     /**
      * Get data about revisions, pages, etc.
      * @param Project $project The project.
@@ -218,7 +248,7 @@ class EditCounterRepository extends UserRightsRepository
             'actorId' => $user->getActorId($project),
         ])->fetchAllAssociative();
 
-        if ($this->isLabs() && 'commons.wikimedia.org' !== $project->getDomain()) {
+        if ($this->isWMF && 'commons.wikimedia.org' !== $project->getDomain()) {
             $results = array_merge($results, $this->getFileCountsCommons($user));
         }
 
@@ -242,7 +272,7 @@ class EditCounterRepository extends UserRightsRepository
      */
     protected function getFileCountsCommons(User $user): array
     {
-        $commonsProject = ProjectRepository::getProject('commonswiki', $this->container);
+        $commonsProject = $this->projectRepo->getProject('commonswiki', $this->container);
         $loggingTableCommons = $commonsProject->getTableName('logging');
         $sql = "(SELECT 'files_moved_commons' AS `key`, COUNT(log_id) AS `val`
                  FROM $loggingTableCommons

@@ -10,7 +10,10 @@ namespace App\Repository;
 use App\Model\Project;
 use App\Model\User;
 use Doctrine\DBAL\Driver\ResultStatement;
-use Symfony\Component\DependencyInjection\ContainerInterface;
+use GuzzleHttp\Client;
+use Psr\Cache\CacheItemPoolInterface;
+use Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Session\Session;
 use Wikimedia\IPUtils;
 
@@ -23,15 +26,12 @@ class UserRepository extends Repository
     /**
      * Convenience method to get a new User object.
      * @param string $username The username.
-     * @param ContainerInterface $container The DI container.
      * @return User
      */
-    public static function getUser(string $username, ContainerInterface $container): User
+    public function getUser(string $username): User
     {
         $user = new User($username);
-        $userRepo = new UserRepository();
-        $userRepo->setContainer($container);
-        $user->setRepository($userRepo);
+        $user->setRepository($this);
         return $user;
     }
 

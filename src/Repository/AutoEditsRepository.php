@@ -9,7 +9,11 @@ namespace App\Repository;
 
 use App\Model\Project;
 use App\Model\User;
+use GuzzleHttp\Client;
 use PDO;
+use Psr\Cache\CacheItemPoolInterface;
+use Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
 use Wikimedia\IPUtils;
 
 /**
@@ -30,12 +34,34 @@ class AutoEditsRepository extends UserRepository
 
     /**
      * AutoEditsRepository constructor. Used solely to set $useSandbox (from AutomatedEditsController).
+     * @param ContainerInterface $container
+     * @param CacheItemPoolInterface $cache
+     * @param Client $guzzle
+     * @param LoggerInterface $logger
+     * @param bool $isWMF
      * @param bool $useSandbox
      */
-    public function __construct(bool $useSandbox = false)
-    {
-        parent::__construct();
+    public function __construct(
+        ContainerInterface $container,
+        CacheItemPoolInterface $cache,
+        Client $guzzle,
+        LoggerInterface $logger,
+        bool $isWMF,
+        int $queryTimeout,
+        bool $useSandbox = false
+    ) {
+        parent::__construct($container, $cache, $guzzle, $logger, $isWMF, $queryTimeout);
         $this->useSandbox = $useSandbox;
+    }
+
+    /**
+     * @param bool $useSandbox
+     * @return AutoEditsRepository
+     */
+    public function setUseSandbox(bool $useSandbox): AutoEditsRepository
+    {
+        $this->useSandbox = $useSandbox;
+        return $this;
     }
 
     /**

@@ -14,7 +14,10 @@ use App\Model\GlobalContribs;
 use App\Repository\EditCounterRepository;
 use App\Repository\GlobalContribsRepository;
 use App\Repository\ProjectRepository;
-use Symfony\Component\DependencyInjection\ContainerInterface;
+use App\Repository\UserRepository;
+use GuzzleHttp\Client;
+use Psr\Cache\CacheItemPoolInterface;
+use Psr\Container\ContainerInterface;
 use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -45,6 +48,9 @@ class EditCounterController extends XtoolsController
     /** @var EditCounter The edit-counter, that does all the work. */
     protected $editCounter;
 
+    /** @var EditCounterRepository */
+    protected $editCounterRepo;
+
     /** @var string[] Which sections to show. */
     protected $sections;
 
@@ -62,10 +68,24 @@ class EditCounterController extends XtoolsController
      * EditCounterController constructor.
      * @param RequestStack $requestStack
      * @param ContainerInterface $container
+     * @param CacheItemPoolInterface $cache
+     * @param Client $guzzle
      * @param I18nHelper $i18n
+     * @param ProjectRepository $projectRepo
+     * @param UserRepository $userRepo
      */
-    public function __construct(RequestStack $requestStack, ContainerInterface $container, I18nHelper $i18n)
-    {
+    public function __construct(
+        RequestStack $requestStack,
+        ContainerInterface $container,
+        CacheItemPoolInterface $cache,
+        Client $guzzle,
+        I18nHelper $i18n,
+        ProjectRepository $projectRepo,
+        UserRepository $userRepo,
+        EditCounterRepository $editCounterRepo
+    ) {
+        $this->editCounterRepo = $editCounterRepo;
+
         // Causes the tool to redirect to the Simple Edit Counter if the user has too high of an edit count.
         $this->tooHighEditCountAction = 'SimpleEditCounterResult';
 
@@ -74,7 +94,7 @@ class EditCounterController extends XtoolsController
 
         $this->restrictedActions = ['monthCountsApi', 'timecardApi'];
 
-        parent::__construct($requestStack, $container, $i18n);
+        parent::__construct($requestStack, $container, $cache, $guzzle, $i18n, $projectRepo, $userRepo);
     }
 
     /**
@@ -104,14 +124,12 @@ class EditCounterController extends XtoolsController
         $this->sections = $this->getRequestedSections();
 
         // Instantiate EditCounter.
-        $editCounterRepo = new EditCounterRepository();
-        $editCounterRepo->setContainer($this->container);
         $this->editCounter = new EditCounter(
             $this->project,
             $this->user,
-            $this->container->get('app.i18n_helper')
+            $this->i18n
         );
-        $this->editCounter->setRepository($editCounterRepo);
+        $this->editCounter->setRepository($this->editCounterRepo);
     }
 
     /**
@@ -233,7 +251,7 @@ class EditCounterController extends XtoolsController
      * @return Response|RedirectResponse
      * @codeCoverageIgnore
      */
-    public function resultAction()
+    public function resultAction(ProjectRepository $projectRepo)
     {
         $this->setUpEditCounter();
 
@@ -253,8 +271,8 @@ class EditCounterController extends XtoolsController
         ];
 
         // Used when querying for global rights changes.
-        if ((bool)$this->container->hasParameter('app.is_labs')) {
-            $ret['metaProject'] = ProjectRepository::getProject('metawiki', $this->container);
+        if ($this->getParameter('app.is_wmf')) {
+            $ret['metaProject'] = $projectRepo->getProject('metawiki');
         }
 
         return $this->getFormattedResponse('editCounter/result', $ret);
@@ -272,12 +290,10 @@ class EditCounterController extends XtoolsController
      * @return Response
      * @codeCoverageIgnore
      */
-    public function generalStatsAction(): Response
+    public function generalStatsAction(GlobalContribsRepository $globalContribsRepo): Response
     {
         $this->setUpEditCounter();
 
-        $globalContribsRepo = new GlobalContribsRepository();
-        $globalContribsRepo->setContainer($this->container);
         $globalContribs = new GlobalContribs($this->user);
         $globalContribs->setRepository($globalContribsRepo);
 

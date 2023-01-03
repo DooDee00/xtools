@@ -6,7 +6,7 @@ namespace App\Repository;
 use App\Model\Project;
 use App\Model\User;
 use PDO;
-use Symfony\Component\DependencyInjection\ContainerInterface;
+use Psr\Container\ContainerInterface;
 use Wikimedia\IPUtils;
 
 /**

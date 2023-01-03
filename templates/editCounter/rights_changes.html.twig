@@ -33,6 +33,11 @@
                         {% endif %}
                         {% for state in ['current', 'former'] %}
                             <tr>
+                                {##
+                                 # The follow messages are used here:
+                                 # * current-user-groups
+                                 # * former-user-groups
+                                 #}
                                 <td>{{ msg(state ~ '-user-groups') }}</td>
                                 <td>
                                     {% set localList = ec.rightsStates.local[state] %}
