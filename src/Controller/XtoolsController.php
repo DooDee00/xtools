@@ -38,66 +38,41 @@ abstract class XtoolsController extends AbstractController
 {
     /** DEPENDENCIES */
 
-    /** @var CacheItemPoolInterface */
-    protected $cache;
-
-    /** @var Client */
-    protected $guzzle;
-
-    /** @var I18nHelper i18n helper. */
-    protected $i18n;
-
-    /** @var ProjectRepository */
-    protected $projectRepo;
-
-    /** @var UserRepository */
-    protected $userRepo;
+    protected CacheItemPoolInterface $cache;
+    protected Client $guzzle;
+    protected I18nHelper $i18n;
+    protected ProjectRepository $projectRepo;
+    protected UserRepository $userRepo;
+    protected PageRepository $pageRepo;
 
     /** OTHER CLASS PROPERTIES */
 
     /** @var Request The request object. */
-    protected $request;
+    protected Request $request;
 
     /** @var string Name of the action within the child controller that is being executed. */
-    protected $controllerAction;
+    protected string $controllerAction;
 
     /** @var array Hash of params parsed from the Request. */
-    protected $params;
+    protected array $params;
 
     /** @var bool Whether this is a request to an API action. */
-    protected $isApi;
+    protected bool $isApi;
 
     /** @var Project Relevant Project parsed from the Request. */
-    protected $project;
+    protected Project $project;
 
-    /** @var User Relevant User parsed from the Request. */
-    protected $user;
+    /** @var User|null Relevant User parsed from the Request. */
+    protected ?User $user;
 
-    /** @var Page Relevant Page parsed from the Request. */
-    protected $page;
+    /** @var Page|null Relevant Page parsed from the Request. */
+    protected ?Page $page = null;
 
     /** @var int|false Start date parsed from the Request. */
     protected $start = false;
 
     /** @var int|false End date parsed from the Request. */
     protected $end = false;
-
-    /**
-     * Default days from current day, to use as the start date if none was provided.
-     * If this is null and $maxDays is non-null, the latter will be used as the default.
-     * Is public visibility evil here? I don't think so.
-     * @var int|null
-     */
-    public $defaultDays = null;
-
-    /**
-     * Maximum number of days allowed for the given date range.
-     * Set this in the controller's constructor to enforce the given date range to be within this range.
-     * This will be used as the default date span unless $defaultDays is defined.
-     * @see XtoolsController::getUnixFromDateParams()
-     * @var int|null
-     */
-    public $maxDays = null;
 
     /** @var int|string|null Namespace parsed from the Request, ID as int or 'all' for all namespaces. */
     protected $namespace;
@@ -106,42 +81,42 @@ abstract class XtoolsController extends AbstractController
     protected $offset = false;
 
     /** @var int Number of results to return. */
-    protected $limit;
+    protected int $limit;
 
     /**
      * Maximum number of results to show per page. Can be overridden in the child controller's constructor.
      * @var int
      */
-    public $maxLimit = 5000;
+    public int $maxLimit = 5000;
 
     /** @var bool Is the current request a subrequest? */
-    protected $isSubRequest;
+    protected bool $isSubRequest;
 
     /**
      * Stores user preferences such default project.
      * This may get altered from the Request and updated in the Response.
      * @var array
      */
-    protected $cookies = [
+    protected array $cookies = [
         'XtoolsProject' => null,
     ];
 
     /** @var array Actions that are exempt from edit count limitations. */
-    protected $tooHighEditCountActionBlacklist = [];
+    protected array $tooHighEditCountActionBlacklist = [];
 
     /**
      * Actions that require the target user to opt in to the restricted statistics.
      * @see https://www.mediawiki.org/wiki/XTools/Edit_Counter#restricted_stats
      * @var string[]
      */
-    protected $restrictedActions = [];
+    protected array $restrictedActions = [];
 
     /**
      * XtoolsController::validateProject() will ensure the given project matches one of these domains,
      * instead of any valid project.
      * @var string[]
      */
-    protected $supportedProjects;
+    protected array $supportedProjects;
 
     /**
      * Require the tool's index route (initial form) be defined here. This should also
@@ -171,6 +146,27 @@ abstract class XtoolsController extends AbstractController
     }
 
     /**
+     * Override to set the maximum number of days allowed for the given date range.
+     * This will be used as the default date span unless $this->defaultDays() is overridden.
+     * @see XtoolsController::getUnixFromDateParams()
+     * @return int|null
+     */
+    protected function maxDays(): ?int
+    {
+        return null;
+    }
+
+    /**
+     * Override to set default days from current day, to use as the start date if none was provided.
+     * If this is null and $this->maxDays() is non-null, the latter will be used as the default.
+     * @return int|null
+     */
+    protected function defaultDays(): ?int
+    {
+        return null;
+    }
+
+    /**
      * XtoolsController constructor.
      * @param RequestStack $requestStack
      * @param ContainerInterface $container
@@ -185,7 +181,8 @@ abstract class XtoolsController extends AbstractController
         Client $guzzle,
         I18nHelper $i18n,
         ProjectRepository $projectRepo,
-        UserRepository $userRepo
+        UserRepository $userRepo,
+        PageRepository $pageRepo
     ) {
         $this->request = $requestStack->getCurrentRequest();
         $this->container = $container;
@@ -194,6 +191,7 @@ abstract class XtoolsController extends AbstractController
         $this->i18n = $i18n;
         $this->projectRepo = $projectRepo;
         $this->userRepo = $userRepo;
+        $this->pageRepo = $pageRepo;
         $this->params = $this->parseQueryParams();
 
         // Parse out the name of the controller and action.
@@ -279,9 +277,7 @@ abstract class XtoolsController extends AbstractController
      */
     protected function getOptedInPage(): Page
     {
-        return $this->project
-            ->getRepository()
-            ->getPage($this->project, $this->project->userOptInPage($this->user));
+        return new Page($this->pageRepo, $this->project, $this->project->userOptInPage($this->user));
     }
 
     /***********
@@ -386,7 +382,7 @@ abstract class XtoolsController extends AbstractController
     {
         $start = $this->params['start'] ?? false;
         $end = $this->params['end'] ?? false;
-        if ($start || $end || null !== $this->maxDays) {
+        if ($start || $end || null !== $this->maxDays()) {
             [$this->start, $this->end] = $this->getUnixFromDateParams($start, $end);
 
             // Set $this->params accordingly too, so that for instance API responses will include it.
@@ -712,9 +708,9 @@ abstract class XtoolsController extends AbstractController
     }
 
     /**
-     * Get Unix timestamps from given start and end string parameters. This also makes $start $maxDays before
+     * Get Unix timestamps from given start and end string parameters. This also makes $start $maxDays() before
      * $end if not present, and makes $end the current time if not present.
-     * The date range will not exceed $this->maxDays days, if this public class property is set.
+     * The date range will not exceed $this->maxDays() days, if this public class property is set.
      * @param int|string|false $start Unix timestamp or string accepted by strtotime.
      * @param int|string|false $end Unix timestamp or string accepted by strtotime.
      * @return int[] Start and end date as UTC timestamps.
@@ -735,13 +731,13 @@ abstract class XtoolsController extends AbstractController
             $today
         );
 
-        // Default to $this->defaultDays or $this->maxDays before end time if start is not present.
-        $daysOffset = $this->defaultDays ?? $this->maxDays;
+        // Default to $this->defaultDays() or $this->maxDays() before end time if start is not present.
+        $daysOffset = $this->defaultDays() ?? $this->maxDays();
         if (false === $startTime && is_int($daysOffset)) {
             $startTime = strtotime("-$daysOffset days", $endTime);
         }
 
-        // Default to $this->defaultDays or $this->maxDays after start time if end is not present.
+        // Default to $this->defaultDays() or $this->maxDays() after start time if end is not present.
         if (false === $end && is_int($daysOffset)) {
             $endTime = min(
                 strtotime("+$daysOffset days", $startTime),
@@ -756,14 +752,14 @@ abstract class XtoolsController extends AbstractController
             $endTime = $newEndTime;
         }
 
-        // Finally, don't let the date range exceed $this->maxDays.
+        // Finally, don't let the date range exceed $this->maxDays().
         $startObj = DateTime::createFromFormat('U', (string)$startTime);
         $endObj = DateTime::createFromFormat('U', (string)$endTime);
-        if (is_int($this->maxDays) && $startObj->diff($endObj)->days > $this->maxDays) {
+        if (is_int($this->maxDays()) && $startObj->diff($endObj)->days > $this->maxDays()) {
             // Show warnings that the date range was truncated.
-            $this->addFlashMessage('warning', 'date-range-too-wide', [$this->maxDays]);
+            $this->addFlashMessage('warning', 'date-range-too-wide', [$this->maxDays()]);
 
-            $startTime = strtotime("-$this->maxDays days", $endTime);
+            $startTime = strtotime('-' . $this->maxDays() . ' days', $endTime);
         }
 
         return [$startTime, $endTime];

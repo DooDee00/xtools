@@ -15,9 +15,6 @@ use DateTime;
  */
 class ArticleInfo extends ArticleInfoApi
 {
-    /** @var I18nHelper For i18n and l10n. */
-    protected I18nHelper $i18n;
-
     /** @var int Number of revisions that were actually processed. */
     protected int $numRevisionsProcessed;
 
@@ -97,16 +94,6 @@ class ArticleInfo extends ArticleInfoApi
         'month' => 0,
         'year' => 0,
     ];
-
-    /**
-     * Make the I18nHelper accessible to ArticleInfo.
-     * @param I18nHelper $i18n
-     * @codeCoverageIgnore
-     */
-    public function setI18nHelper(I18nHelper $i18n): void
-    {
-        $this->i18n = $i18n;
-    }
 
     /**
      * Get the day of last date we should show in the month/year sections,

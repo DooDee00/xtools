@@ -11,10 +11,14 @@ use App\Exception\XtoolsHttpException;
 use App\Helper\I18nHelper;
 use App\Model\EditCounter;
 use App\Model\GlobalContribs;
+use App\Model\UserRights;
 use App\Repository\EditCounterRepository;
+use App\Repository\EditRepository;
 use App\Repository\GlobalContribsRepository;
+use App\Repository\PageRepository;
 use App\Repository\ProjectRepository;
 use App\Repository\UserRepository;
+use App\Repository\UserRightsRepository;
 use GuzzleHttp\Client;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Container\ContainerInterface;
@@ -51,6 +55,12 @@ class EditCounterController extends XtoolsController
     /** @var EditCounterRepository */
     protected $editCounterRepo;
 
+    /** @var UserRights $userRights */
+    protected $userRights;
+
+    /** @var UserRightsRepository */
+    protected $userRightsRepo;
+
     /** @var string[] Which sections to show. */
     protected $sections;
 
@@ -73,6 +83,9 @@ class EditCounterController extends XtoolsController
      * @param I18nHelper $i18n
      * @param ProjectRepository $projectRepo
      * @param UserRepository $userRepo
+     * @param EditCounterRepository $editCounterRepo
+     * @param UserRightsRepository $userRightsRepo
+     * @param PageRepository $pageRepo
      */
     public function __construct(
         RequestStack $requestStack,
@@ -82,13 +95,14 @@ class EditCounterController extends XtoolsController
         I18nHelper $i18n,
         ProjectRepository $projectRepo,
         UserRepository $userRepo,
-        EditCounterRepository $editCounterRepo
+        EditCounterRepository $editCounterRepo,
+        UserRightsRepository $userRightsRepo,
+        PageRepository $pageRepo
     ) {
         $this->editCounterRepo = $editCounterRepo;
-
+        $this->userRightsRepo = $userRightsRepo;
         $this->restrictedActions = ['monthCountsApi', 'timecardApi'];
-
-        parent::__construct($requestStack, $container, $cache, $guzzle, $i18n, $projectRepo, $userRepo);
+        parent::__construct($requestStack, $container, $cache, $guzzle, $i18n, $projectRepo, $userRepo, $pageRepo);
     }
 
     /**
@@ -135,14 +149,16 @@ class EditCounterController extends XtoolsController
         // Store which sections of the Edit Counter they requested.
         $this->sections = $this->getRequestedSections();
 
+        $this->userRights = new UserRights($this->userRightsRepo, $this->project, $this->user, $this->i18n);
+
         // Instantiate EditCounter.
         $this->editCounter = new EditCounter(
+            $this->editCounterRepo,
             $this->i18n,
             $this->userRights,
             $this->project,
             $this->user
         );
-        $this->editCounter->setRepository($this->editCounterRepo);
     }
 
     /**
@@ -264,7 +280,7 @@ class EditCounterController extends XtoolsController
      * @return Response|RedirectResponse
      * @codeCoverageIgnore
      */
-    public function resultAction(ProjectRepository $projectRepo)
+    public function resultAction()
     {
         $this->setUpEditCounter();
 
@@ -285,7 +301,7 @@ class EditCounterController extends XtoolsController
 
         // Used when querying for global rights changes.
         if ($this->getParameter('app.is_wmf')) {
-            $ret['metaProject'] = $projectRepo->getProject('metawiki');
+            $ret['metaProject'] = $this->projectRepo->getProject('metawiki');
         }
 
         return $this->getFormattedResponse('editCounter/result', $ret);
@@ -300,16 +316,18 @@ class EditCounterController extends XtoolsController
      *         "username" = "(ipr-.+\/\d+[^\/])|([^\/]+)",
      *     }
      * )
+     * @param GlobalContribsRepository $globalContribsRepo
+     * @param EditRepository $editRepo
      * @return Response
      * @codeCoverageIgnore
      */
-    public function generalStatsAction(GlobalContribsRepository $globalContribsRepo): Response
-    {
+    public function generalStatsAction(
+        GlobalContribsRepository $globalContribsRepo,
+        EditRepository $editRepo
+    ): Response {
         $this->setUpEditCounter();
 
-        $globalContribs = new GlobalContribs($this->user);
-        $globalContribs->setRepository($globalContribsRepo);
-
+        $globalContribs = new GlobalContribs($globalContribsRepo, $editRepo, $this->user);
         $ret = [
             'xtTitle' => $this->user->getUsername(),
             'xtPage' => 'EditCounter',

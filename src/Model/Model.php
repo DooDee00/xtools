@@ -50,10 +50,12 @@ abstract class Model
     /**
      * Set this model's data repository.
      * @param Repository $repository
+     * @return Model
      */
-    public function setRepository(Repository $repository): void
+    public function setRepository(Repository $repository): Model
     {
         $this->repository = $repository;
+        return $this;
     }
 
     /**

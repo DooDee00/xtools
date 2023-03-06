@@ -90,6 +90,14 @@ class EditCounter extends Model
     }
 
     /**
+     * @return UserRights
+     */
+    public function getUserRights(): UserRights
+    {
+        return $this->userRights;
+    }
+
+    /**
      * Get revision and page counts etc.
      * @return int[]
      */
@@ -728,7 +736,7 @@ class EditCounter extends Model
      */
     public function namespaceTotals(): array
     {
-        if ($this->namespaceTotals) {
+        if (isset($this->namespaceTotals)) {
             return $this->namespaceTotals;
         }
         $counts = $this->repository->getNamespaceTotals($this->project, $this->user);
@@ -753,7 +761,7 @@ class EditCounter extends Model
      */
     public function timeCard(): array
     {
-        if ($this->timeCardData) {
+        if (isset($this->timeCardData)) {
             return $this->timeCardData;
         }
         $totals = $this->repository->getTimeCard($this->project, $this->user);
@@ -1044,7 +1052,7 @@ class EditCounter extends Model
      */
     public function getEditSizeData(): array
     {
-        if (!is_array($this->editSizeData)) {
+        if (!isset($this->editSizeData)) {
             $this->editSizeData = $this->repository
                 ->getEditSizeData($this->project, $this->user);
         }

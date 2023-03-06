@@ -20,12 +20,12 @@
 {% endif %}
 |-
 | {{ msg('user-groups') }}
-| {% for group in ec.rightsStates.local.current %}{{ ec.rightsNames[group] }}{% if not loop.last %}, {% endif %}{% endfor %}
+| {% for group in ec.userRights.rightsStates.local.current %}{{ ec.userRights.rightsNames[group] }}{% if not loop.last %}, {% endif %}{% endfor %}
 
-{% if ec.rightsStates.global.current %}
+{% if ec.userRights.rightsStates.global.current %}
 |-
 | {{ msg('global-user-groups') }}
-| {% for group in ec.rightsStates.global.current %}{{ ec.rightsNames[group] }}{% if not loop.last %}, {% endif %}{% endfor %}
+| {% for group in ec.userRights.rightsStates.global.current %}{{ ec.userRights.rightsNames[group] }}{% if not loop.last %}, {% endif %}{% endfor %}
 
 {% endif %}
 |-

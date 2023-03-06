@@ -5,8 +5,11 @@ namespace App\Repository;
 
 use App\Model\Project;
 use App\Model\User;
+use GuzzleHttp\Client;
 use PDO;
+use Psr\Cache\CacheItemPoolInterface;
 use Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
 use Wikimedia\IPUtils;
 
 /**
@@ -16,22 +19,34 @@ use Wikimedia\IPUtils;
 class GlobalContribsRepository extends Repository
 {
     /** @var Project CentralAuth project (meta.wikimedia for WMF installation). */
-    protected $caProject;
+    protected Project $caProject;
 
-    /**
-     * Create Project and ProjectRepository once we have the container.
-     * @param ContainerInterface $container
-     */
-    public function setContainer(ContainerInterface $container): void
-    {
-        parent::setContainer($container);
+    /** @var ProjectRepository */
+    private ProjectRepository $projectRepo;
 
-        $this->caProject = ProjectRepository::getProject(
-            $this->container->getParameter('central_auth_project'),
-            $this->container
+    public function __construct(
+        ContainerInterface $container,
+        CacheItemPoolInterface $cache,
+        Client $guzzle,
+        LoggerInterface $logger,
+        bool $isWMF,
+        int $queryTimeout,
+        ProjectRepository $projectRepo
+    ) {
+        parent::__construct($container, $cache, $guzzle, $logger, $isWMF, $queryTimeout);
+        $this->caProject = new Project(
+            $this->container->getParameter('central_auth_project')
         );
-        $this->caProject->getRepository()
-            ->setContainer($this->container);
+        $this->projectRepo = $projectRepo;
+        $this->caProject->setRepository($this->projectRepo);
+    }
+
+    protected function getCentralAuthProject(): Project
+    {
+        if (!isset($this->caProject)) {
+            $this->caProject = new Project($this->container->getParameter('central_auth_project'));
+        }
+        return $this->caProject;
     }
 
     /**
@@ -56,10 +71,12 @@ class GlobalContribsRepository extends Repository
         // Compile the output.
         $out = [];
         foreach ($editCounts as $editCount) {
+            $project = new Project($editCount['dbName']);
+            $project->setRepository($this->projectRepo);
             $out[] = [
                 'dbName' => $editCount['dbName'],
                 'total' => $editCount['total'],
-                'project' => ProjectRepository::getProject($editCount['dbName'], $this->container),
+                'project' => $project,
             ];
         }
         return $out;

@@ -30,8 +30,7 @@ class UserRepository extends Repository
      */
     public function getUser(string $username): User
     {
-        $user = new User($username);
-        $user->setRepository($this);
+        $user = new User($this, $username);
         return $user;
     }
 

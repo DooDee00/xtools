@@ -8,6 +8,7 @@ declare(strict_types = 1);
 namespace App\Repository;
 
 use App\Model\Page;
+use App\Model\PageAssessments;
 use App\Model\Project;
 use Doctrine\DBAL\Connection;
 use Exception;
@@ -41,7 +42,7 @@ class ProjectRepository extends Repository
         $project = new Project($projectIdent);
         $project->setRepository($this);
 
-        // The associated PageAssessmentsRepository also needs the container.
+        // Create the associated PageAssessments and its Repository.
         $paRepo = new PageAssessmentsRepository(
             $this->container,
             $this->cache,
@@ -50,7 +51,7 @@ class ProjectRepository extends Repository
             $this->isWMF,
             $this->queryTimeout
         );
-        $project->getPageAssessments()->setRepository($paRepo);
+        $project->setPageAssessments(new PageAssessments($paRepo, $project));
 
 //        if ($this->isWMF) {
 //            $this->setSingleBasicInfo([
@@ -69,10 +70,10 @@ class ProjectRepository extends Repository
      * @param ContainerInterface $container
      * @return Project
      */
-    public static function getDefaultProject(ContainerInterface $container): Project
+    public function getDefaultProject(ContainerInterface $container): Project
     {
         $defaultProjectName = $container->getParameter('default_project');
-        return self::getProject($defaultProjectName, $container);
+        return $this->getProject($defaultProjectName, $container);
     }
 
     /**
@@ -81,7 +82,7 @@ class ProjectRepository extends Repository
      */
     public function getGlobalProject(): Project
     {
-        if ($this->isLabs()) {
+        if ($this->isWMF) {
             return self::getProject('metawiki', $this->container);
         } else {
             return self::getDefaultProject($this->container);
@@ -337,21 +338,6 @@ class ProjectRepository extends Repository
     }
 
     /**
-     * Get a page from the given Project.
-     * @param Project $project The project.
-     * @param string $pageName The name of the page.
-     * @return Page
-     */
-    public function getPage(Project $project, string $pageName): Page
-    {
-        $pageRepo = new PageRepository();
-        $pageRepo->setContainer($this->container);
-        $page = new Page($project, $pageName);
-        $page->setRepository($pageRepo);
-        return $page;
-    }
-
-    /**
      * Check to see if a page exists on this project and has some content.
      * @param Project $project The project.
      * @param int $namespaceId The page namespace ID.
@@ -420,7 +406,7 @@ class ProjectRepository extends Repository
             ->executeQuery($sql, [$groups], [Connection::PARAM_STR_ARRAY])
             ->fetchAllAssociative();
 
-        if (count($globalGroups) > 0 && $this->isLabs()) {
+        if (count($globalGroups) > 0 && $this->isWMF) {
             $sql = "SELECT gu_name AS user_name, gug_group AS user_group
                     FROM centralauth_p.global_user_groups
                     JOIN centralauth_p.globaluser ON gug_user = gu_id

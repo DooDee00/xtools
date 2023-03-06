@@ -7,30 +7,28 @@ declare(strict_types = 1);
 
 namespace App\Model;
 
-use App\Repository\PageAssessmentsRepository;
-
 /**
  * A Project is a single wiki that XTools is querying.
  */
 class Project extends Model
 {
     /** @var string The project name as supplied by the user. */
-    protected $nameUnnormalized;
+    protected string $nameUnnormalized;
 
     /** @var string[] Basic metadata about the project */
-    protected $metadata;
+    protected array $metadata;
 
     /** @var string[] Project's 'dbName', 'url' and 'lang'. */
-    protected $basicInfo;
+    protected array $basicInfo;
 
     /** @var PageAssessments Contains methods around the page assessments config for the Project. */
-    protected $pageAssessments;
+    protected PageAssessments $pageAssessments;
 
     /**
      * Whether the user being queried for in this session has opted in to restricted statistics.
      * @var bool
      */
-    protected $userOptedIn;
+    protected bool $userOptedIn;
 
     /**
      * Create a new Project.
@@ -49,6 +47,16 @@ class Project extends Model
     public function getPageAssessments(): PageAssessments
     {
         return $this->pageAssessments;
+    }
+
+    /**
+     * @param PageAssessments $pageAssessments
+     * @return Project
+     */
+    public function setPageAssessments(PageAssessments $pageAssessments): Project
+    {
+        $this->pageAssessments = $pageAssessments;
+        return $this;
     }
 
     /**
@@ -283,7 +291,7 @@ class Project extends Model
     public function userHasOptedIn(User $user): bool
     {
         // 1. First check to see if the whole project has opted in.
-        if (!$this->userOptedIn) {
+        if (!isset($this->userOptedIn)) {
             $optedInProjects = $this->getRepository()->optedIn();
             $this->userOptedIn = in_array($this->getDatabaseName(), $optedInProjects);
         }

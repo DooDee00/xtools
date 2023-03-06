@@ -58,8 +58,7 @@ class AdminScoreController extends XtoolsController
      */
     public function resultAction(AdminScoreRepository $adminScoreRepo): Response
     {
-        $adminScore = new AdminScore($this->project, $this->user);
-        $adminScore->setRepository($adminScoreRepo);
+        $adminScore = new AdminScore($adminScoreRepo, $this->project, $this->user);
 
         return $this->getFormattedResponse('adminscore/result', [
             'xtPage' => 'AdminScore',

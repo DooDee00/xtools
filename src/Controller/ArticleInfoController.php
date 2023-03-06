@@ -55,7 +55,6 @@ class ArticleInfoController extends XtoolsController
             'xtPage' => 'ArticleInfo',
             'xtPageTitle' => 'tool-articleinfo',
             'xtSubtitle' => 'tool-articleinfo-desc',
-            'project' => $this->project,
 
             // Defaults that will get overridden if in $params.
             'start' => '',
@@ -67,17 +66,20 @@ class ArticleInfoController extends XtoolsController
     /**
      * Setup the ArticleInfo instance and its Repository.
      */
-    private function setupArticleInfo(): void
+    private function setupArticleInfo(ArticleInfoRepository $aiRepo, I18nHelper $i18n): void
     {
         if (isset($this->articleInfo)) {
             return;
         }
 
-        $articleInfoRepo = new ArticleInfoRepository();
-        $articleInfoRepo->setContainer($this->container);
-        $this->articleInfo = new ArticleInfo($this->page, $this->container, $this->start, $this->end);
-        $this->articleInfo->setRepository($articleInfoRepo);
-        $this->articleInfo->setI18nHelper($this->container->get('app.i18n_helper'));
+        $this->articleInfo = new ArticleInfo(
+            $aiRepo,
+            $i18n,
+            $this->page,
+            $this->container,
+            $this->start,
+            $this->end
+        );
     }
 
     /**
@@ -87,11 +89,10 @@ class ArticleInfoController extends XtoolsController
      * @Route("/articleinfo-gadget.js", name="ArticleInfoGadget")
      * @link https://www.mediawiki.org/wiki/XTools/ArticleInfo_gadget
      *
-     * @param Request $request The HTTP request
      * @return Response
      * @codeCoverageIgnore
      */
-    public function gadgetAction(Request $request): Response
+    public function gadgetAction(): Response
     {
         $rendered = $this->renderView('articleInfo/articleinfo.js.twig');
         $response = new Response($rendered);
@@ -113,11 +114,12 @@ class ArticleInfoController extends XtoolsController
      *         "end"=false,
      *     }
      * )
+     * @param ArticleInfoRepository $aiRepo
      * @param I18nHelper $i18n
      * @return Response
      * @codeCoverageIgnore
      */
-    public function resultAction(I18nHelper $i18n): Response
+    public function resultAction(ArticleInfoRepository $aiRepo, I18nHelper $i18n): Response
     {
         if (!$this->isDateRangeValid($this->page, $this->start, $this->end)) {
             $this->addFlashMessage('notice', 'date-range-outside-revisions');
@@ -127,10 +129,10 @@ class ArticleInfoController extends XtoolsController
             ]);
         }
 
-        $this->setupArticleInfo();
+        $this->setupArticleInfo($aiRepo, $i18n);
         $this->articleInfo->prepareData();
 
-        $maxRevisions = $this->container->getParameter('app.max_page_revisions');
+        $maxRevisions = $this->getParameter('app.max_page_revisions');
 
         // Show message if we hit the max revisions.
         if ($this->articleInfo->tooManyRevisions()) {
@@ -187,15 +189,17 @@ class ArticleInfoController extends XtoolsController
      *     requirements={"page"=".+"}
      * )
      * @Route("/api/page/articleinfo/{project}/{page}", requirements={"page"=".+"})
+     * @param ArticleInfoRepository $aiRepo
+     * @param I18nHelper $i18n
      * @return Response|JsonResponse
      * See ArticleInfoControllerTest::testArticleInfoApi()
      * @codeCoverageIgnore
      */
-    public function articleInfoApiAction(): Response
+    public function articleInfoApiAction(ArticleInfoRepository $aiRepo, I18nHelper $i18n): Response
     {
         $this->recordApiUsage('page/articleinfo');
 
-        $this->setupArticleInfo();
+        $this->setupArticleInfo($aiRepo, $i18n);
         $data = [];
 
         try {
@@ -247,14 +251,15 @@ class ArticleInfoController extends XtoolsController
      *     name="PageApiProse",
      *     requirements={"page"=".+"}
      * )
+     * @param ArticleInfoRepository $aiRepo
+     * @param I18nHelper $i18n
      * @return JsonResponse
      * @codeCoverageIgnore
      */
-    public function proseStatsApiAction(): JsonResponse
+    public function proseStatsApiAction(ArticleInfoRepository $aiRepo, I18nHelper $i18n): JsonResponse
     {
         $this->recordApiUsage('page/prose');
-
-        $this->setupArticleInfo();
+        $this->setupArticleInfo($aiRepo, $i18n);
         return $this->getFormattedApiResponse($this->articleInfo->getProseStats());
     }
 
@@ -326,14 +331,16 @@ class ArticleInfoController extends XtoolsController
      *         "limit"=20,
      *     }
      * )
+     * @param ArticleInfoRepository $aiRepo
+     * @param I18nHelper $i18n
      * @return JsonResponse
      * @codeCoverageIgnore
      */
-    public function topEditorsApiAction(): JsonResponse
+    public function topEditorsApiAction(ArticleInfoRepository $aiRepo, I18nHelper $i18n): JsonResponse
     {
         $this->recordApiUsage('page/top_editors');
 
-        $this->setupArticleInfo();
+        $this->setupArticleInfo($aiRepo, $i18n);
         $topEditors = $this->articleInfo->getTopEditorsByEditCount(
             (int)$this->limit,
             '' != $this->request->query->get('nobots')

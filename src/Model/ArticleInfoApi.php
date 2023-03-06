@@ -3,9 +3,10 @@ declare(strict_types = 1);
 
 namespace App\Model;
 
+use App\Helper\I18nHelper;
 use App\Repository\ArticleInfoRepository;
 use DateTime;
-use Symfony\Component\DependencyInjection\ContainerInterface;
+use Psr\Container\ContainerInterface;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException;
@@ -18,8 +19,11 @@ use Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException;
  */
 class ArticleInfoApi extends Model
 {
-    /** @var ContainerInterface The application's DI container. */
+    /** @var ContainerInterface */
     protected ContainerInterface $container;
+
+    /** @var I18nHelper For i18n and l10n. */
+    protected I18nHelper $i18n;
 
     /** @var int Number of revisions that belong to the page. */
     protected int $numRevisions;
@@ -51,6 +55,7 @@ class ArticleInfoApi extends Model
     /**
      * ArticleInfoApi constructor.
      * @param ArticleInfoRepository $repository
+     * @param I18nHelper $i18n
      * @param Page $page The page to process.
      * @param ContainerInterface $container The DI container.
      * @param false|int $start Start date as Unix timestmap.
@@ -58,12 +63,14 @@ class ArticleInfoApi extends Model
      */
     public function __construct(
         ArticleInfoRepository $repository,
+        I18nHelper $i18n,
         Page $page,
         ContainerInterface $container,
         $start = false,
         $end = false
     ) {
         $this->repository = $repository;
+        $this->i18n = $i18n;
         $this->page = $page;
         $this->container = $container;
         $this->start = $start;

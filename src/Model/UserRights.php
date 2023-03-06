@@ -33,9 +33,16 @@ class UserRights extends Model
     /** @var array The current and former rights of the user. */
     protected array $rightsStates = [];
 
-    public function __construct(UserRightsRepository $repository)
+    /**
+     * @param UserRightsRepository $repository
+     * @param User $user
+     */
+    public function __construct(UserRightsRepository $repository, Project $project, User $user, I18nHelper $i18n)
     {
         $this->repository = $repository;
+        $this->project = $project;
+        $this->user = $user;
+        $this->i18n = $i18n;
     }
 
     /**

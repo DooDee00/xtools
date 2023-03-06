@@ -9,8 +9,13 @@ namespace App\Controller;
 
 use App\Helper\I18nHelper;
 use App\Model\TopEdits;
+use App\Repository\PageRepository;
+use App\Repository\ProjectRepository;
 use App\Repository\TopEditsRepository;
-use Symfony\Component\DependencyInjection\ContainerInterface;
+use App\Repository\UserRepository;
+use GuzzleHttp\Client;
+use Psr\Cache\CacheItemPoolInterface;
+use Psr\Container\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
@@ -35,18 +40,43 @@ class TopEditsController extends XtoolsController
      * TopEditsController constructor.
      * @param RequestStack $requestStack
      * @param ContainerInterface $container
+     * @param CacheItemPoolInterface $cache
+     * @param Client $guzzle
      * @param I18nHelper $i18n
+     * @param ProjectRepository $projectRepo
+     * @param UserRepository $userRepo
+     * @param PageRepository $pageRepo
      */
-    public function __construct(RequestStack $requestStack, ContainerInterface $container, I18nHelper $i18n)
-    {
-        $this->tooHighEditCountAction = $this->getIndexRoute();
-
-        // The Top Edits by page action is exempt from the edit count limitation.
-        $this->tooHighEditCountActionBlacklist = ['singlePageTopEdits'];
-
+    public function __construct(
+        RequestStack $requestStack,
+        ContainerInterface $container,
+        CacheItemPoolInterface $cache,
+        Client $guzzle,
+        I18nHelper $i18n,
+        ProjectRepository $projectRepo,
+        UserRepository $userRepo,
+        PageRepository $pageRepo
+    ) {
         $this->restrictedActions = ['namespaceTopEditsUserApi'];
+        parent::__construct($requestStack, $container, $cache, $guzzle, $i18n, $projectRepo, $userRepo, $pageRepo);
+    }
 
-        parent::__construct($requestStack, $container, $i18n);
+    /**
+     * @inheritDoc
+     */
+    public function tooHighEditCountRoute(): string
+    {
+        return $this->getIndexRoute();
+    }
+
+    /**
+     * The Top Edits by page action is exempt from the edit count limitation.
+     * @return string[]
+     * @inheritDoc
+     */
+    public function tooHighEditCountActionAllowlist(): array
+    {
+        return ['singlePageTopEdits'];
     }
 
     /**
