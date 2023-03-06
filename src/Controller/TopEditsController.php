@@ -9,6 +9,7 @@ namespace App\Controller;
 
 use App\Helper\I18nHelper;
 use App\Model\TopEdits;
+use App\Repository\EditRepository;
 use App\Repository\PageRepository;
 use App\Repository\ProjectRepository;
 use App\Repository\TopEditsRepository;
@@ -26,6 +27,9 @@ use Symfony\Component\Routing\Annotation\Route;
  */
 class TopEditsController extends XtoolsController
 {
+    protected TopEditsRepository $topEditsRepo;
+    protected EditRepository $editRepo;
+
     /**
      * Get the name of the tool's index route. This is also the name of the associated model.
      * @return string
@@ -46,6 +50,8 @@ class TopEditsController extends XtoolsController
      * @param ProjectRepository $projectRepo
      * @param UserRepository $userRepo
      * @param PageRepository $pageRepo
+     * @param TopEditsRepository $topEditsRepo
+     * @param EditRepository $editRepo
      */
     public function __construct(
         RequestStack $requestStack,
@@ -55,9 +61,13 @@ class TopEditsController extends XtoolsController
         I18nHelper $i18n,
         ProjectRepository $projectRepo,
         UserRepository $userRepo,
-        PageRepository $pageRepo
+        PageRepository $pageRepo,
+        TopEditsRepository $topEditsRepo,
+        EditRepository $editRepo
     ) {
         $this->restrictedActions = ['namespaceTopEditsUserApi'];
+        $this->topEditsRepo = $topEditsRepo;
+        $this->editRepo = $editRepo;
         parent::__construct($requestStack, $container, $cache, $guzzle, $i18n, $projectRepo, $userRepo, $pageRepo);
     }
 
@@ -118,7 +128,9 @@ class TopEditsController extends XtoolsController
      */
     public function setUpTopEdits(): TopEdits
     {
-        $topEdits = new TopEdits(
+        return new TopEdits(
+            $this->topEditsRepo,
+            $this->editRepo,
             $this->project,
             $this->user,
             $this->page,
@@ -128,12 +140,6 @@ class TopEditsController extends XtoolsController
             $this->limit,
             (int)$this->request->query->get('pagination', 0)
         );
-
-        $topEditsRepo = new TopEditsRepository();
-        $topEditsRepo->setContainer($this->container);
-        $topEdits->setRepository($topEditsRepo);
-
-        return $topEdits;
     }
 
     /**

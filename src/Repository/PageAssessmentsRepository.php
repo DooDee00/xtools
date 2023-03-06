@@ -13,6 +13,7 @@ use GuzzleHttp\Client;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
 /**
  * An PageAssessmentsRepository is responsible for retrieving page assessment
@@ -21,8 +22,23 @@ use Psr\Log\LoggerInterface;
  */
 class PageAssessmentsRepository extends Repository
 {
+    protected ParameterBagInterface $parameterBag;
+
     /** @var array The assessments config. */
     protected array $assessments;
+
+//    public function __construct(
+//        ContainerInterface $container,
+//        CacheItemPoolInterface $cache,
+//        Client $guzzle,
+//        LoggerInterface $logger,
+//        bool $isWMF,
+//        int $queryTimeout,
+//        ParameterBagInterface $parameterBag
+//    ) {
+//        $this->parameterBag = $parameterBag;
+//        parent::__construct($container, $cache, $guzzle, $logger, $isWMF, $queryTimeout);
+//    }
 
     /**
      * Get page assessments configuration for the Project.
@@ -32,7 +48,7 @@ class PageAssessmentsRepository extends Repository
     public function getConfig(Project $project)
     {
         if (!isset($this->assessments)) {
-            $this->assessments = $this->container->get('parameter_bag')->get('assessments');
+            $this->assessments = $this->container->getParameter('assessments');
         }
         return $this->assessments[$project->getDomain()] ?? false;
     }

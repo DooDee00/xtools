@@ -23,15 +23,6 @@ use Wikimedia\IPUtils;
 class TopEditsRepository extends UserRepository
 {
     /**
-     * Expose the container to the TopEdits class.
-     * @return ContainerInterface
-     */
-    public function getContainer(): ContainerInterface
-    {
-        return $this->container;
-    }
-
-    /**
      * Get the top edits by a user in a single namespace.
      * @param Project $project
      * @param User $user
@@ -62,7 +53,7 @@ class TopEditsRepository extends UserRepository
         $pageTable = $project->getTableName('page');
         $revisionTable = $project->getTableName('revision');
 
-        $hasPageAssessments = $this->isLabs() && $project->hasPageAssessments() && 0 === $namespace;
+        $hasPageAssessments = $this->isWMF && $project->hasPageAssessments() && 0 === $namespace;
         $paTable = $project->getTableName('page_assessments');
         $paSelect = $hasPageAssessments
             ?  ", (
@@ -176,7 +167,7 @@ class TopEditsRepository extends UserRepository
         $revDateConditions = $this->getDateConditions($start, $end);
         $pageTable = $this->getTableName($project->getDatabaseName(), 'page');
         $revisionTable = $this->getTableName($project->getDatabaseName(), 'revision');
-        $hasPageAssessments = $this->isLabs() && $project->hasPageAssessments();
+        $hasPageAssessments = $this->isWMF && $project->hasPageAssessments();
         $pageAssessmentsTable = $this->getTableName($project->getDatabaseName(), 'page_assessments');
         $paSelect = $hasPageAssessments
             ?  ", (

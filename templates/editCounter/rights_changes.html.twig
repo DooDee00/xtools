@@ -88,7 +88,7 @@
     </div>
 {% endif %}
 
-{% if ec.globalRightsChanges|length > 0 %}
+{% if ec.userRights.globalRightsChanges|length > 0 %}
     <h4 class="xt-show-hide--parent">
         {{ msg('global-rights-changes') }}
         <small class='xt-show'>[{{ msg('show')|lower }}]</small>

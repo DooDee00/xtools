@@ -49,20 +49,13 @@ class EditCounterController extends XtoolsController
         'rights-changes' => 'EditCounterRightsChanges',
     ];
 
-    /** @var EditCounter The edit-counter, that does all the work. */
-    protected $editCounter;
-
-    /** @var EditCounterRepository */
-    protected $editCounterRepo;
-
-    /** @var UserRights $userRights */
-    protected $userRights;
-
-    /** @var UserRightsRepository */
-    protected $userRightsRepo;
+    protected EditCounter $editCounter;
+    protected EditCounterRepository $editCounterRepo;
+    protected UserRights $userRights;
+    protected UserRightsRepository $userRightsRepo;
 
     /** @var string[] Which sections to show. */
-    protected $sections;
+    protected array $sections;
 
     /**
      * Get the name of the tool's index route. This is also the name of the associated model.
@@ -551,7 +544,7 @@ class EditCounterController extends XtoolsController
             'ec' => $this->editCounter,
         ];
 
-        if ($this->container->hasParameter('app.is_wmf')) {
+        if ($this->getParameter('app.is_wmf')) {
             $ret['metaProject'] = $this->projectRepo->getProject('metawiki');
         }
 
