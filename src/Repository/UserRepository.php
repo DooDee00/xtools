@@ -290,6 +290,7 @@ class UserRepository extends Repository
 
         // Get the default project if not provided.
         if (!$project instanceof Project) {
+            $project = $this->
             $project = ProjectRepository::getDefaultProject($this->container);
         }
 

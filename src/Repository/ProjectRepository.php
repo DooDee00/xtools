@@ -7,12 +7,14 @@ declare(strict_types = 1);
 
 namespace App\Repository;
 
-use App\Model\Page;
 use App\Model\PageAssessments;
 use App\Model\Project;
 use Doctrine\DBAL\Connection;
 use Exception;
+use GuzzleHttp\Client;
+use Psr\Cache\CacheItemPoolInterface;
 use Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
 
 /**
  * This class provides data to the Project class.
@@ -20,17 +22,32 @@ use Psr\Container\ContainerInterface;
  */
 class ProjectRepository extends Repository
 {
+    protected PageAssessmentsRepository $assessmentsRepo;
+
     /** @var array Project's 'dbName', 'url' and 'lang'. */
-    protected $basicInfo;
+    protected array $basicInfo;
 
     /** @var string[] Basic metadata if XTools is in single-wiki mode. */
-    protected $singleBasicInfo;
+    protected array $singleBasicInfo;
 
     /** @var array Full Project metadata, including $basicInfo. */
-    protected $metadata;
+    protected array $metadata;
 
     /** @var string The cache key for the 'all project' metadata. */
-    protected $cacheKeyAllProjects = 'allprojects';
+    protected string $cacheKeyAllProjects = 'allprojects';
+
+    public function __construct(
+        ContainerInterface $container,
+        CacheItemPoolInterface $cache,
+        Client $guzzle,
+        LoggerInterface $logger,
+        bool $isWMF,
+        int $queryTimeout,
+        PageAssessmentsRepository $assessmentsRepo
+    ) {
+        $this->assessmentsRepo = $assessmentsRepo;
+        parent::__construct($container, $cache, $guzzle, $logger, $isWMF, $queryTimeout);
+    }
 
     /**
      * Convenience method to get a new Project object based on a given identification string.
@@ -41,17 +58,7 @@ class ProjectRepository extends Repository
     {
         $project = new Project($projectIdent);
         $project->setRepository($this);
-
-        // Create the associated PageAssessments and its Repository.
-        $paRepo = new PageAssessmentsRepository(
-            $this->container,
-            $this->cache,
-            $this->guzzle,
-            $this->logger,
-            $this->isWMF,
-            $this->queryTimeout
-        );
-        $project->setPageAssessments(new PageAssessments($paRepo, $project));
+        $project->setPageAssessments(new PageAssessments($this->assessmentsRepo, $project));
 
 //        if ($this->isWMF) {
 //            $this->setSingleBasicInfo([
@@ -67,13 +74,12 @@ class ProjectRepository extends Repository
 
     /**
      * Get the XTools default project.
-     * @param ContainerInterface $container
      * @return Project
      */
-    public function getDefaultProject(ContainerInterface $container): Project
+    public function getDefaultProject(): Project
     {
-        $defaultProjectName = $container->getParameter('default_project');
-        return $this->getProject($defaultProjectName, $container);
+        $defaultProjectName = $this->container->getParameter('default_project');
+        return $this->getProject($defaultProjectName);
     }
 
     /**
@@ -153,13 +159,13 @@ class ProjectRepository extends Repository
      * Get the 'dbName', 'url' and 'lang' of a project. This is all you need to make database queries.
      * More comprehensive metadata can be fetched with getMetadata() at the expense of an API call.
      * @param string $project A project URL, domain name, or database name.
-     * @return string[]|bool With 'dbName', 'url' and 'lang' keys; or false if not found.
+     * @return string[]|null With 'dbName', 'url' and 'lang' keys; or null if not found.
      */
-    public function getOne(string $project)
+    public function getOne(string $project): ?array
     {
         $this->logger->debug(__METHOD__." Getting metadata about $project");
         // For single-wiki setups, every project is the same.
-        if (!empty($this->singleBasicInfo)) {
+        if (isset($this->singleBasicInfo)) {
             return $this->singleBasicInfo;
         }
 
@@ -203,6 +209,7 @@ class ProjectRepository extends Repository
             'projectUrl3' => "https://www.$project",
             'projectUrl4' => "https://www.$project.org",
         ])->fetchAssociative();
+        $basicInfo = false === $basicInfo ? null : $basicInfo;
 
         // Cache for one hour and return.
         return $this->setCache($cacheKey, $basicInfo, 'PT1H');

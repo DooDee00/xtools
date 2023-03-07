@@ -16,22 +16,22 @@ class AdminStats extends Model
 {
 
     /** @var string[][] Keyed by user name, values are arrays containing actions and counts. */
-    protected $adminStats;
+    protected array $adminStats;
 
     /** @var string[] Keys are user names, values are their user groups. */
-    protected $usersAndGroups;
+    protected array $usersAndGroups;
 
     /** @var int Number of users in the relevant group who made any actions within the time period. */
-    protected $numWithActions = 0;
+    protected int $numWithActions = 0;
 
     /** @var string[] Usernames of users who are in the relevant user group (sysop for admins, etc.). */
-    private $usersInGroup = [];
+    private array $usersInGroup = [];
 
     /** @var string Type that we're getting stats for (admin, patroller, steward, etc.). See admin_stats.yaml */
-    private $type;
+    private string $type;
 
     /** @var string[] Which actions to show ('block', 'protect', etc.) */
-    private $actions;
+    private array $actions;
 
     /**
      * AdminStats constructor.

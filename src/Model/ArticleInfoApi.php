@@ -7,7 +7,6 @@ use App\Helper\AutomatedEditsHelper;
 use App\Helper\I18nHelper;
 use App\Repository\ArticleInfoRepository;
 use DateTime;
-use Psr\Container\ContainerInterface;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException;

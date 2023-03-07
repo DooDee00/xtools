@@ -55,15 +55,14 @@ class AdminStatsTest extends TestAdapter
         $startUTC = strtotime('2017-01-01');
         $endUTC = strtotime('2017-03-01');
 
-        // Single namespace, with defaults.
-        $as = new AdminStats($this->asRepo, $this->project, $startUTC, $endUTC, 'admin', []);
-
         $this->asRepo->expects(static::once())
             ->method('getStats')
             ->willReturn($this->adminStatsFactory());
         $this->asRepo->method('getRelevantUserGroup')
             ->willReturn('sysop');
-        $as->setRepository($this->asRepo);
+
+        // Single namespace, with defaults.
+        $as = new AdminStats($this->asRepo, $this->project, $startUTC, $endUTC, 'admin', []);
 
         $as->prepareStats();
 

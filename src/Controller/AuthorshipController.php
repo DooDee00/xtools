@@ -113,7 +113,6 @@ class AuthorshipController extends XtoolsController
         $limit = $isSubRequest ? 10 : ($this->limit ?? 500);
 
         $authorship = new Authorship($authorshipRepo, $this->page, $target, $limit);
-        $authorship->setRepository($authorshipRepo);
         $authorship->prepareData();
 
         return $this->getFormattedResponse('authorship/authorship', [
