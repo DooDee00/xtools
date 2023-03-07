@@ -9,6 +9,7 @@ namespace App\Model;
 
 use App\Repository\EditRepository;
 use App\Repository\PageRepository;
+use App\Repository\UserRepository;
 use DateTime;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -17,14 +18,16 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  */
 class Edit extends Model
 {
+    protected UserRepository $userRepo;
+
     /** @var int ID of the revision */
-    protected $id;
+    protected int $id;
 
     /** @var DateTime Timestamp of the revision */
-    protected $timestamp;
+    protected DateTime $timestamp;
 
     /** @var bool Whether or not this edit was a minor edit */
-    protected $minor;
+    protected bool $minor;
 
     /** @var int|string|null Length of the page as of this edit, in bytes */
     protected $length;
@@ -33,22 +36,24 @@ class Edit extends Model
     protected $lengthChange;
 
     /** @var string The edit summary */
-    protected $comment;
+    protected string $comment;
 
     /** @var string The SHA-1 of the wikitext as of the revision. */
-    protected $sha;
+    protected string $sha;
 
-    /** @var bool Whether this edit was later reverted. */
-    protected $reverted;
+    /** @var bool|null Whether this edit was later reverted. */
+    protected ?bool $reverted;
 
     /**
      * Edit constructor.
+     * @param EditRepository $repository
      * @param Page $page
      * @param string[] $attrs Attributes, as retrieved by PageRepository::getRevisions()
      */
-    public function __construct(EditRepository $repository, Page $page, array $attrs = [])
+    public function __construct(EditRepository $repository, UserRepository $userRepo, Page $page, array $attrs = [])
     {
         $this->repository = $repository;
+        $this->userRepo = $userRepo;
         $this->page = $page;
 
         // Copy over supported attributes
@@ -61,10 +66,11 @@ class Edit extends Model
             $this->timestamp = DateTime::createFromFormat('YmdHis', $attrs['timestamp']);
         }
 
+        $this->user = $attrs['user'] ?? ($attrs['username'] ? new User($this->userRepo, $attrs['username']) : null);
+
         $this->minor = '1' === $attrs['minor'];
         $this->length = (int)$attrs['length'];
         $this->lengthChange = (int)$attrs['length_change'];
-        $this->user = $attrs['user'] ?? ($attrs['username'] ? new User($attrs['username']) : null);
         $this->comment = $attrs['comment'];
 
         if (isset($attrs['rev_sha1']) || isset($attrs['sha'])) {

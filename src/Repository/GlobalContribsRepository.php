@@ -131,7 +131,7 @@ class GlobalContribsRepository extends Repository
         $projects = [];
 
         foreach ($dbNames as $dbName) {
-            $projects[$dbName] = ProjectRepository::getProject($dbName, $this->container);
+            $projects[$dbName] = $this->projectRepo->getProject($dbName);
         }
 
         return $projects;
@@ -163,7 +163,7 @@ class GlobalContribsRepository extends Repository
      * Get projects that the user has made at least one edit on, and the associated actor ID.
      * @param User $user
      * @param string[] $dbNames Loop over these projects instead of all of them.
-     * @return mixed[] Keys are database names, values are actor IDs.
+     * @return array Keys are database names, values are actor IDs.
      */
     public function getDbNamesAndActorIds(User $user, ?array $dbNames = null): array
     {

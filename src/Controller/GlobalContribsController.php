@@ -6,9 +6,14 @@ namespace App\Controller;
 use App\Helper\I18nHelper;
 use App\Model\Edit;
 use App\Model\GlobalContribs;
+use App\Repository\EditRepository;
 use App\Repository\GlobalContribsRepository;
+use App\Repository\PageRepository;
 use App\Repository\ProjectRepository;
-use Symfony\Component\DependencyInjection\ContainerInterface;
+use App\Repository\UserRepository;
+use GuzzleHttp\Client;
+use Psr\Cache\CacheItemPoolInterface;
+use Psr\Container\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
@@ -20,17 +25,26 @@ use Symfony\Component\Routing\Annotation\Route;
  */
 class GlobalContribsController extends XtoolsController
 {
-    /**
-     * Used to override properties set in XtoolsController.
-     * @param RequestStack $requestStack
-     * @param ContainerInterface $container
-     * @param I18nHelper $i18n
-     */
-    public function __construct(RequestStack $requestStack, ContainerInterface $container, I18nHelper $i18n)
-    {
-        // GlobalContribs can be very slow, especially for wide IP ranges.
+    protected GlobalContribsRepository $globalContribsRepo;
+    protected EditRepository $editRepo;
+
+    public function __construct(
+        RequestStack $requestStack,
+        ContainerInterface $container,
+        CacheItemPoolInterface $cache,
+        Client $guzzle,
+        I18nHelper $i18n,
+        ProjectRepository $projectRepo,
+        UserRepository $userRepo,
+        PageRepository $pageRepo,
+        GlobalContribsRepository $globalContribsRepo,
+        EditRepository $editRepo
+    ) {
+        // GlobalContribs can be very slow, especially for wide IP ranges, so limit to max 500 results.
         $this->maxLimit = 500;
-        parent::__construct($requestStack, $container, $i18n);
+        $this->globalContribsRepo = $globalContribsRepo;
+        $this->editRepo = $editRepo;
+        parent::__construct($requestStack, $container, $cache, $guzzle, $i18n, $projectRepo, $userRepo, $pageRepo);
     }
 
     /**
@@ -59,12 +73,9 @@ class GlobalContribsController extends XtoolsController
         }
 
         // FIXME: Nasty hack until T226072 is resolved.
-        $project = ProjectRepository::getProject($this->i18n->getLang().'.wikipedia', $this->container);
+        $project = $this->projectRepo->getProject($this->i18n->getLang().'.wikipedia');
         if (!$project->exists()) {
-            $project = ProjectRepository::getProject(
-                $this->container->getParameter('central_auth_project'),
-                $this->container
-            );
+            $project = $this->projectRepo->getProject($this->getParameter('central_auth_project'));
         }
 
         return $this->render('globalContribs/index.html.twig', array_merge([
@@ -126,9 +137,11 @@ class GlobalContribsController extends XtoolsController
      */
     public function resultsAction(): Response
     {
-        $globalContribsRepo = new GlobalContribsRepository();
-        $globalContribsRepo->setContainer($this->container);
         $globalContribs = new GlobalContribs(
+            $this->globalContribsRepo,
+            $this->editRepo,
+            $this->pageRepo,
+            $this->userRepo,
             $this->user,
             $this->namespace,
             $this->start,
@@ -136,12 +149,7 @@ class GlobalContribsController extends XtoolsController
             $this->offset,
             $this->limit
         );
-        $globalContribs->setRepository($globalContribsRepo);
-        $defaultProject = ProjectRepository::getProject(
-            $this->container->getParameter('central_auth_project'),
-            $this->container
-        );
-        $defaultProject->getRepository()->setContainer($this->container);
+        $defaultProject = $this->projectRepo->getProject($this->getParameter('central_auth_project'));
 
         return $this->render('globalContribs/result.html.twig', [
             'xtTitle' => $this->user->getUsername(),

@@ -24,17 +24,6 @@ use Wikimedia\IPUtils;
 class UserRepository extends Repository
 {
     /**
-     * Convenience method to get a new User object.
-     * @param string $username The username.
-     * @return User
-     */
-    public function getUser(string $username): User
-    {
-        $user = new User($this, $username);
-        return $user;
-    }
-
-    /**
      * Get the user's ID and registration date.
      * @param string $databaseName The database to query.
      * @param string $username The username to find.

@@ -311,6 +311,7 @@ class EditCounterController extends XtoolsController
      * )
      * @param GlobalContribsRepository $globalContribsRepo
      * @param EditRepository $editRepo
+     * @param UserRepository $userRepo
      * @return Response
      * @codeCoverageIgnore
      */
@@ -320,7 +321,13 @@ class EditCounterController extends XtoolsController
     ): Response {
         $this->setUpEditCounter();
 
-        $globalContribs = new GlobalContribs($globalContribsRepo, $editRepo, $this->user);
+        $globalContribs = new GlobalContribs(
+            $globalContribsRepo,
+            $editRepo,
+            $this->pageRepo,
+            $this->userRepo,
+            $this->user
+        );
         $ret = [
             'xtTitle' => $this->user->getUsername(),
             'xtPage' => 'EditCounter',

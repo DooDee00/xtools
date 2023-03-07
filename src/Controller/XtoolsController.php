@@ -482,7 +482,7 @@ abstract class XtoolsController extends AbstractController
      */
     public function validateUser(string $username): User
     {
-        $user = $this->userRepo->getUser($username);
+        $user = new User($this->userRepo, $username);
 
         // Allow querying for any IP, currently with no edit count limitation...
         // Once T188677 is resolved IPs will be affected by the EXPLAIN results.
@@ -498,7 +498,7 @@ abstract class XtoolsController extends AbstractController
         $originalParams = $this->params;
 
         // Don't continue if the user doesn't exist.
-        if ($this->project && !$user->existsOnProject($this->project)) {
+        if (isset($this->project) && !$user->existsOnProject($this->project)) {
             $this->throwXtoolsException($this->getIndexRoute(), 'user-not-found', [], 'username');
         }
 

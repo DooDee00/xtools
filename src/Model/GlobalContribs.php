@@ -5,14 +5,17 @@ namespace App\Model;
 
 use App\Repository\EditRepository;
 use App\Repository\GlobalContribsRepository;
+use App\Repository\PageRepository;
+use App\Repository\UserRepository;
 
 /**
  * A GlobalContribs provides a list of a user's edits to all projects.
  */
 class GlobalContribs extends Model
 {
-    /** @var EditRepository */
-    protected EditRepository $editRepository;
+    protected EditRepository $editRepo;
+    protected PageRepository $pageRepo;
+    protected UserRepository $userRepo;
 
     /** @var int Number of results per page. */
     public const PAGE_SIZE = 50;
@@ -26,7 +29,9 @@ class GlobalContribs extends Model
     /**
      * GlobalContribs constructor.
      * @param GlobalContribsRepository $repository
-     * @param EditRepository $editRepository
+     * @param EditRepository $editRepo
+     * @param PageRepository $pageRepo
+     * @param UserRepository $userRepo
      * @param User $user
      * @param string|int|null $namespace Namespace ID or 'all'.
      * @param false|int $start As Unix timestamp.
@@ -36,7 +41,9 @@ class GlobalContribs extends Model
      */
     public function __construct(
         GlobalContribsRepository $repository,
-        EditRepository $editRepository,
+        EditRepository $editRepo,
+        PageRepository $pageRepo,
+        UserRepository $userRepo,
         User $user,
         $namespace = 'all',
         $start = false,
@@ -45,7 +52,9 @@ class GlobalContribs extends Model
         ?int $limit = null
     ) {
         $this->repository = $repository;
-        $this->editRepository = $editRepository;
+        $this->editRepo = $editRepo;
+        $this->pageRepo = $pageRepo;
+        $this->userRepo = $userRepo;
         $this->user = $user;
         $this->namespace = '' == $namespace ? 0 : $namespace;
         $this->start = $start;
@@ -172,7 +181,7 @@ class GlobalContribs extends Model
 
     private function getEditFromRevision(Project $project, array $revision): Edit
     {
-        $page = Page::newFromRow($project, $revision);
-        return new Edit($this->editRepository, $page, $revision);
+        $page = Page::newFromRow($this->pageRepo, $project, $revision);
+        return new Edit($this->editRepo, $this->userRepo, $page, $revision);
     }
 }
