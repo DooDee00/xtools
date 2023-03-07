@@ -43,24 +43,24 @@ class ArticleInfo extends ArticleInfoApi
     /** @var string[] Localized labels for the months, to be used in the 'Month counts' chart. */
     protected array $monthLabels = [];
 
-    /** @var Edit The first edit to the page. */
-    protected Edit $firstEdit;
+    /** @var Edit|null The first edit to the page. */
+    protected ?Edit $firstEdit = null;
 
-    /** @var Edit The last edit to the page. */
-    protected Edit $lastEdit;
+    /** @var Edit|null The last edit to the page. */
+    protected ?Edit $lastEdit = null;
 
-    /** @var Edit Edit that made the largest addition by number of bytes. */
-    protected Edit $maxAddition;
+    /** @var Edit|null Edit that made the largest addition by number of bytes. */
+    protected ?Edit $maxAddition = null;
 
-    /** @var Edit Edit that made the largest deletion by number of bytes. */
-    protected Edit $maxDeletion;
+    /** @var Edit|null Edit that made the largest deletion by number of bytes. */
+    protected ?Edit $maxDeletion = null;
 
     /**
      * Maximum number of edits that were created across all months. This is used as a comparison
      * for the bar charts in the months section.
      * @var int
      */
-    protected int $maxEditsPerMonth;
+    protected int $maxEditsPerMonth = 0;
 
     /** @var string[][] List of (semi-)automated tools that were used to edit the page. */
     protected array $tools;
@@ -149,7 +149,7 @@ class ArticleInfo extends ArticleInfoApi
         }
 
         if ($this->tooManyRevisions()) {
-            $this->numRevisionsProcessed = $this->getMaxRevisions();
+            $this->numRevisionsProcessed = $this->repository->maxPageRevisions;
         } else {
             $this->numRevisionsProcessed = $this->getNumRevisions();
         }
@@ -485,7 +485,7 @@ class ArticleInfo extends ArticleInfoApi
      */
     private function parseHistory(): void
     {
-        $limit = $this->tooManyRevisions() ? $this->getMaxRevisions() : null;
+        $limit = $this->tooManyRevisions() ? $this->repository->maxPageRevisions : null;
 
         // Third parameter is ignored if $limit is null.
         $revStmt = $this->page->getRevisionsStmt(
@@ -520,7 +520,7 @@ class ArticleInfo extends ArticleInfoApi
         ];
 
         while ($rev = $revStmt->fetchAssociative()) {
-            $edit = new Edit($this->page, $rev);
+            $edit = $this->repository->getEdit($this->page, $rev);
 
             if (0 === $revCount) {
                 $this->firstEdit = $edit;
@@ -611,7 +611,7 @@ class ArticleInfo extends ArticleInfoApi
      */
     private function isRevert(Edit $edit, array $prevEdits): bool
     {
-        return $edit->getSha() === $prevEdits['prevSha'] || $edit->isRevert($this->container);
+        return $edit->getSha() === $prevEdits['prevSha'] || $edit->isRevert();
     }
 
     /**
@@ -711,7 +711,7 @@ class ArticleInfo extends ArticleInfoApi
      */
     private function updateToolCounts(Edit $edit): void
     {
-        $automatedTool = $edit->getTool($this->container);
+        $automatedTool = $edit->getTool();
 
         if (false === $automatedTool) {
             // Nothing to do.

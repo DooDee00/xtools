@@ -8,15 +8,23 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Exception\XtoolsHttpException;
+use App\Helper\AutomatedEditsHelper;
 use App\Helper\I18nHelper;
 use App\Model\ArticleInfo;
 use App\Model\Authorship;
 use App\Model\Page;
 use App\Model\Project;
 use App\Repository\ArticleInfoRepository;
+use App\Repository\PageRepository;
+use App\Repository\ProjectRepository;
+use App\Repository\UserRepository;
+use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ServerException;
+use Psr\Cache\CacheItemPoolInterface;
+use Psr\Container\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
@@ -25,8 +33,9 @@ use Symfony\Component\Routing\Annotation\Route;
  */
 class ArticleInfoController extends XtoolsController
 {
-    /** @var ArticleInfo The ArticleInfo class that does all the work. */
-    protected $articleInfo;
+    protected ArticleInfo $articleInfo;
+    protected ArticleInfoRepository $articleInfoRepo;
+    protected AutomatedEditsHelper $autoEditsHelper;
 
     /**
      * Get the name of the tool's index route. This is also the name of the associated model.
@@ -36,6 +45,23 @@ class ArticleInfoController extends XtoolsController
     public function getIndexRoute(): string
     {
         return 'ArticleInfo';
+    }
+
+    public function __construct(
+        RequestStack $requestStack,
+        ContainerInterface $container,
+        CacheItemPoolInterface $cache,
+        Client $guzzle,
+        I18nHelper $i18n,
+        ProjectRepository $projectRepo,
+        UserRepository $userRepo,
+        PageRepository $pageRepo,
+        ArticleInfoRepository $articleInfoRepo,
+        AutomatedEditsHelper $autoEditsHelper
+    ) {
+        $this->articleInfoRepo = $articleInfoRepo;
+        $this->autoEditsHelper = $autoEditsHelper;
+        parent::__construct($requestStack, $container, $cache, $guzzle, $i18n, $projectRepo, $userRepo, $pageRepo);
     }
 
     /**
@@ -66,17 +92,17 @@ class ArticleInfoController extends XtoolsController
     /**
      * Setup the ArticleInfo instance and its Repository.
      */
-    private function setupArticleInfo(ArticleInfoRepository $aiRepo, I18nHelper $i18n): void
+    private function setupArticleInfo(): void
     {
         if (isset($this->articleInfo)) {
             return;
         }
 
         $this->articleInfo = new ArticleInfo(
-            $aiRepo,
-            $i18n,
+            $this->articleInfoRepo,
+            $this->i18n,
+            $this->autoEditsHelper,
             $this->page,
-            $this->container,
             $this->start,
             $this->end
         );
@@ -114,12 +140,10 @@ class ArticleInfoController extends XtoolsController
      *         "end"=false,
      *     }
      * )
-     * @param ArticleInfoRepository $aiRepo
-     * @param I18nHelper $i18n
      * @return Response
      * @codeCoverageIgnore
      */
-    public function resultAction(ArticleInfoRepository $aiRepo, I18nHelper $i18n): Response
+    public function resultAction(): Response
     {
         if (!$this->isDateRangeValid($this->page, $this->start, $this->end)) {
             $this->addFlashMessage('notice', 'date-range-outside-revisions');
@@ -129,7 +153,7 @@ class ArticleInfoController extends XtoolsController
             ]);
         }
 
-        $this->setupArticleInfo($aiRepo, $i18n);
+        $this->setupArticleInfo();
         $this->articleInfo->prepareData();
 
         $maxRevisions = $this->getParameter('app.max_page_revisions');
@@ -189,17 +213,15 @@ class ArticleInfoController extends XtoolsController
      *     requirements={"page"=".+"}
      * )
      * @Route("/api/page/articleinfo/{project}/{page}", requirements={"page"=".+"})
-     * @param ArticleInfoRepository $aiRepo
-     * @param I18nHelper $i18n
      * @return Response|JsonResponse
      * See ArticleInfoControllerTest::testArticleInfoApi()
      * @codeCoverageIgnore
      */
-    public function articleInfoApiAction(ArticleInfoRepository $aiRepo, I18nHelper $i18n): Response
+    public function articleInfoApiAction(): Response
     {
         $this->recordApiUsage('page/articleinfo');
 
-        $this->setupArticleInfo($aiRepo, $i18n);
+        $this->setupArticleInfo();
         $data = [];
 
         try {
@@ -251,15 +273,13 @@ class ArticleInfoController extends XtoolsController
      *     name="PageApiProse",
      *     requirements={"page"=".+"}
      * )
-     * @param ArticleInfoRepository $aiRepo
-     * @param I18nHelper $i18n
      * @return JsonResponse
      * @codeCoverageIgnore
      */
-    public function proseStatsApiAction(ArticleInfoRepository $aiRepo, I18nHelper $i18n): JsonResponse
+    public function proseStatsApiAction(): JsonResponse
     {
         $this->recordApiUsage('page/prose');
-        $this->setupArticleInfo($aiRepo, $i18n);
+        $this->setupArticleInfo();
         return $this->getFormattedApiResponse($this->articleInfo->getProseStats());
     }
 
@@ -331,16 +351,14 @@ class ArticleInfoController extends XtoolsController
      *         "limit"=20,
      *     }
      * )
-     * @param ArticleInfoRepository $aiRepo
-     * @param I18nHelper $i18n
      * @return JsonResponse
      * @codeCoverageIgnore
      */
-    public function topEditorsApiAction(ArticleInfoRepository $aiRepo, I18nHelper $i18n): JsonResponse
+    public function topEditorsApiAction(): JsonResponse
     {
         $this->recordApiUsage('page/top_editors');
 
-        $this->setupArticleInfo($aiRepo, $i18n);
+        $this->setupArticleInfo();
         $topEditors = $this->articleInfo->getTopEditorsByEditCount(
             (int)$this->limit,
             '' != $this->request->query->get('nobots')

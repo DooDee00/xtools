@@ -404,13 +404,11 @@ class Edit extends Model
 
     /**
      * Was the edit a revert, based on the edit summary?
-     * @param ContainerInterface $container The DI container.
      * @return bool
      */
-    public function isRevert(ContainerInterface $container): bool
+    public function isRevert(): bool
     {
-        $automatedEditsHelper = $container->get('app.automated_edits_helper');
-        return $automatedEditsHelper->isRevert($this->comment, $this->getProject());
+        return $this->repository->getAutoEditsHelper()->isRevert($this->comment, $this->getProject());
     }
 
     /**

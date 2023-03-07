@@ -3,6 +3,7 @@ declare(strict_types = 1);
 
 namespace App\Model;
 
+use App\Helper\AutomatedEditsHelper;
 use App\Helper\I18nHelper;
 use App\Repository\ArticleInfoRepository;
 use DateTime;
@@ -19,17 +20,11 @@ use Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException;
  */
 class ArticleInfoApi extends Model
 {
-    /** @var ContainerInterface */
-    protected ContainerInterface $container;
-
-    /** @var I18nHelper For i18n and l10n. */
+    protected AutomatedEditsHelper $autoEditsHelper;
     protected I18nHelper $i18n;
 
     /** @var int Number of revisions that belong to the page. */
     protected int $numRevisions;
-
-    /** @var int Maximum number of revisions to process, as configured. */
-    protected int $maxRevisions;
 
     /** @var array Prose stats, with keys 'characters', 'words', 'references', 'unique_references', 'sections'. */
     protected array $proseStats;
@@ -56,23 +51,23 @@ class ArticleInfoApi extends Model
      * ArticleInfoApi constructor.
      * @param ArticleInfoRepository $repository
      * @param I18nHelper $i18n
+     * @param AutomatedEditsHelper $autoEditsHelper
      * @param Page $page The page to process.
-     * @param ContainerInterface $container The DI container.
      * @param false|int $start Start date as Unix timestmap.
      * @param false|int $end End date as Unix timestamp.
      */
     public function __construct(
         ArticleInfoRepository $repository,
         I18nHelper $i18n,
+        AutomatedEditsHelper $autoEditsHelper,
         Page $page,
-        ContainerInterface $container,
         $start = false,
         $end = false
     ) {
         $this->repository = $repository;
         $this->i18n = $i18n;
+        $this->autoEditsHelper = $autoEditsHelper;
         $this->page = $page;
-        $this->container = $container;
         $this->start = $start;
         $this->end = $end;
     }
@@ -95,19 +90,8 @@ class ArticleInfoApi extends Model
      */
     public function tooManyRevisions(): bool
     {
-        return $this->getMaxRevisions() > 0 && $this->getNumRevisions() > $this->getMaxRevisions();
-    }
-
-    /**
-     * Get the maximum number of revisions that we should process.
-     * @return int
-     */
-    public function getMaxRevisions(): int
-    {
-        if (!isset($this->maxRevisions)) {
-            $this->maxRevisions = (int) $this->container->getParameter('app.max_page_revisions');
-        }
-        return $this->maxRevisions;
+        return $this->repository->maxPageRevisions > 0 &&
+            $this->getNumRevisions() > $this->repository->maxPageRevisions;
     }
 
     /**
@@ -460,7 +444,7 @@ class ArticleInfoApi extends Model
         // Parse the bot edits.
         $this->bots = [];
 
-        $limit = $this->tooManyRevisions() ? $this->getMaxRevisions() : null;
+        $limit = $this->tooManyRevisions() ? $this->repository->maxPageRevisions : null;
 
         $botData = $this->repository->getBotData($this->page, $this->start, $this->end, $limit);
         while ($bot = $botData->fetchAssociative()) {

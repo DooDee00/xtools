@@ -200,7 +200,7 @@ class PageRepository extends Repository
         // In this case revision is faster than revision_userindex if we're not querying by user.
         $revTable = $page->getProject()->getTableName(
             'revision',
-            $user && $this->isLabs() ? '_userindex' : ''
+            $user && $this->isWMF ? '_userindex' : ''
         );
         $userClause = $user ? "rev_actor = :actorId AND " : "";
 
@@ -228,7 +228,7 @@ class PageRepository extends Repository
     public function getCheckWikiErrors(Page $page): array
     {
         // Only support mainspace on Labs installations
-        if (0 !== $page->getNamespace() || !$this->isLabs()) {
+        if (0 !== $page->getNamespace() || !$this->isWMF) {
             return [];
         }
 
