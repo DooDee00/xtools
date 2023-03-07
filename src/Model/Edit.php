@@ -70,8 +70,8 @@ class Edit extends Model
         $this->user = $attrs['user'] ?? ($attrs['username'] ? new User($this->userRepo, $attrs['username']) : null);
 
         $this->minor = '1' === $attrs['minor'];
-        $this->length = $attrs['length'] ?? (int)$attrs['length'];
-        $this->lengthChange = $attrs['length_change'] ?? (int)$attrs['length_change'];
+        $this->length = isset($attrs['length']) ? (int)$attrs['length'] : null;
+        $this->lengthChange = isset($attrs['length_change']) ? (int)$attrs['length_change'] : null;
         $this->comment = $attrs['comment'];
 
         if (isset($attrs['rev_sha1']) || isset($attrs['sha'])) {

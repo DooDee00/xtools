@@ -15,13 +15,19 @@ class EditRepository extends Repository
 {
     /**
      * Get an Edit instance given the revision ID. This does NOT set the associated User or Page.
+     * @param UserRepository $userRepo
      * @param Project $project
      * @param int $revId
      * @param Page|null $page Provide if you already know the Page, so as to point to the same instance.
+     *   This should already have the PageRepository set.
      * @return Edit|null Null if not found.
      */
-    public function getEditFromRevIdForPage(Project $project, int $revId, ?Page $page = null): ?Edit
-    {
+    public function getEditFromRevIdForPage(
+        UserRepository $userRepo,
+        Project $project,
+        int $revId,
+        ?Page $page = null
+    ): ?Edit {
         $revisionTable = $project->getTableName('revision', '');
         $commentTable = $project->getTableName('comment', 'revision');
         $actorTable = $project->getTableName('actor', 'revision');
@@ -58,10 +64,10 @@ class EditRepository extends Repository
 
         // Create the Page instance.
         if (null === $page) {
-            $page = new Page($project, $result['page_title']);
+            $page = new Page(null, $project, $result['page_title']);
         }
 
-        $edit = new Edit($page, $result);
+        $edit = new Edit($this, $userRepo, $page, $result);
         $edit->setRepository($this);
 
         return $edit;

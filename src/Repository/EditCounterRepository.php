@@ -22,14 +22,9 @@ use Wikimedia\IPUtils;
  */
 class EditCounterRepository extends Repository
 {
-    /** @var ProjectRepository */
-    protected ProjectRepository $projectRepo;
-
-    /** @var UserRightsRepository */
-    protected UserRightsRepository $userRightsRepo;
-
-    /** @var AutoEditsRepository */
     protected AutoEditsRepository $autoEditsRepo;
+    protected ProjectRepository $projectRepo;
+    protected UserRightsRepository $userRightsRepo;
 
     /**
      * @param ContainerInterface $container

@@ -405,7 +405,7 @@ class PageRepository extends Repository
     /**
      * Get the full HTML content of the the page.
      * @param Page $page
-     * @param int $revId What revision to query for.
+     * @param int|null $revId What revision to query for.
      * @return string
      */
     public function getHTMLContent(Page $page, ?int $revId = null): string

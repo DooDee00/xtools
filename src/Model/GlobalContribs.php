@@ -29,9 +29,9 @@ class GlobalContribs extends Model
     /**
      * GlobalContribs constructor.
      * @param GlobalContribsRepository $repository
-     * @param EditRepository $editRepo
      * @param PageRepository $pageRepo
      * @param UserRepository $userRepo
+     * @param EditRepository $editRepo
      * @param User $user
      * @param string|int|null $namespace Namespace ID or 'all'.
      * @param false|int $start As Unix timestamp.
@@ -41,9 +41,9 @@ class GlobalContribs extends Model
      */
     public function __construct(
         GlobalContribsRepository $repository,
-        EditRepository $editRepo,
         PageRepository $pageRepo,
         UserRepository $userRepo,
+        EditRepository $editRepo,
         User $user,
         $namespace = 'all',
         $start = false,
@@ -52,9 +52,9 @@ class GlobalContribs extends Model
         ?int $limit = null
     ) {
         $this->repository = $repository;
-        $this->editRepo = $editRepo;
         $this->pageRepo = $pageRepo;
         $this->userRepo = $userRepo;
+        $this->editRepo = $editRepo;
         $this->user = $user;
         $this->namespace = '' == $namespace ? 0 : $namespace;
         $this->start = $start;

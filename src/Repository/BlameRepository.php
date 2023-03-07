@@ -5,7 +5,10 @@ namespace App\Repository;
 
 use App\Model\Edit;
 use App\Model\Page;
+use GuzzleHttp\Client;
+use Psr\Cache\CacheItemPoolInterface;
 use Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
 
 /**
  * BlameRepository is responsible for retrieving authorship data about a single page.
@@ -13,18 +16,22 @@ use Psr\Container\ContainerInterface;
  */
 class BlameRepository extends AuthorshipRepository
 {
-    /** @var EditRepository Instance of EditRepository. */
-    protected $editRepo;
+    protected EditRepository $editRepo;
+    protected UserRepository $userRepo;
 
-    /**
-     * Set the EditRepository once the container is available.
-     * @param ContainerInterface $container
-     */
-    public function setContainer(ContainerInterface $container): void
-    {
-        parent::setContainer($container);
-        $this->editRepo = new EditRepository();
-        $this->editRepo->setContainer($this->container);
+    public function __construct(
+        ContainerInterface $container,
+        CacheItemPoolInterface $cache,
+        Client $guzzle,
+        LoggerInterface $logger,
+        bool $isWMF,
+        int $queryTimeout,
+        EditRepository $editRepo,
+        UserRepository $userRepo
+    ) {
+        parent::__construct($container, $cache, $guzzle, $logger, $isWMF, $queryTimeout);
+        $this->editRepo = $editRepo;
+        $this->userRepo = $userRepo;
     }
 
     /**
@@ -35,6 +42,6 @@ class BlameRepository extends AuthorshipRepository
      */
     public function getEditFromRevId(Page $page, int $revId): ?Edit
     {
-        return $this->editRepo->getEditFromRevIdForPage($page->getProject(), $revId, $page);
+        return $this->editRepo->getEditFromRevIdForPage($this->userRepo, $page->getProject(), $revId, $page);
     }
 }
