@@ -116,7 +116,7 @@ class PagesRepository extends UserRepository
 
         $pageAssessmentsTable = $project->getTableName('page_assessments');
 
-        $hasPageAssessments = $this->isLabs() && $project->hasPageAssessments();
+        $hasPageAssessments = $this->isWMF && $project->hasPageAssessments();
         if ($hasPageAssessments) {
             $conditions['paSelects'] = ', pa_class, pa_importance, pa_page_revision';
             $conditions['paSelectsArchive'] = ', NULL AS pa_class, NULL AS pa_page_id, '.

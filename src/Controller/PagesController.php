@@ -10,8 +10,12 @@ namespace App\Controller;
 use App\Helper\I18nHelper;
 use App\Model\Pages;
 use App\Model\Project;
+use App\Repository\PageRepository;
 use App\Repository\PagesRepository;
-use GuzzleHttp;
+use App\Repository\ProjectRepository;
+use App\Repository\UserRepository;
+use GuzzleHttp\Client;
+use Psr\Cache\CacheItemPoolInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -25,6 +29,23 @@ use Symfony\Component\Routing\Annotation\Route;
  */
 class PagesController extends XtoolsController
 {
+    protected PagesRepository $pagesRepo;
+
+    public function __construct(
+        RequestStack $requestStack,
+        ContainerInterface $container,
+        CacheItemPoolInterface $cache,
+        Client $guzzle,
+        I18nHelper $i18n,
+        ProjectRepository $projectRepo,
+        UserRepository $userRepo,
+        PageRepository $pageRepo,
+        PagesRepository $pagesRepo
+    ) {
+        $this->pagesRepo = $pagesRepo;
+        parent::__construct($requestStack, $container, $cache, $guzzle, $i18n, $projectRepo, $userRepo, $pageRepo);
+    }
+
     /**
      * Get the name of the tool's index route.
      * This is also the name of the associated model.
@@ -37,20 +58,19 @@ class PagesController extends XtoolsController
     }
 
     /**
-     * PagesController constructor.
-     * @param RequestStack $requestStack
-     * @param ContainerInterface $container
-     * @param I18nHelper $i18n
+     * @inheritDoc
      */
-    public function __construct(RequestStack $requestStack, ContainerInterface $container, I18nHelper $i18n)
+    public function tooHighEditCountRoute(): string
     {
-        // Causes the tool to redirect to the index page if the user has too high of an edit count.
-        $this->tooHighEditCountAction = $this->getIndexRoute();
+        return $this->getIndexRoute();
+    }
 
-        // The countPagesApi action is exempt from the edit count limitation.
-        $this->tooHighEditCountActionBlacklist = ['countPagesApi'];
-
-        parent::__construct($requestStack, $container, $i18n);
+    /**
+     * @inheritDoc
+     */
+    public function tooHighEditCountActionAllowlist(): array
+    {
+        return ['countPagesApi'];
     }
 
     /**
@@ -97,9 +117,8 @@ class PagesController extends XtoolsController
             $this->throwXtoolsException($this->getIndexRoute(), 'error-ip-range-unsupported');
         }
 
-        $pagesRepo = new PagesRepository();
-        $pagesRepo->setContainer($this->container);
-        $pages = new Pages(
+        return new Pages(
+            $this->pagesRepo,
             $this->project,
             $this->user,
             $this->namespace,
@@ -109,9 +128,6 @@ class PagesController extends XtoolsController
             $this->end,
             $this->offset
         );
-        $pages->setRepository($pagesRepo);
-
-        return $pages;
     }
 
     /**

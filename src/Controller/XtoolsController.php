@@ -66,7 +66,7 @@ abstract class XtoolsController extends AbstractController
     protected ?User $user;
 
     /** @var Page|null Relevant Page parsed from the Request. */
-    protected ?Page $page = null;
+    protected ?Page $page;
 
     /** @var int|false Start date parsed from the Request. */
     protected $start = false;
@@ -100,9 +100,6 @@ abstract class XtoolsController extends AbstractController
     protected array $cookies = [
         'XtoolsProject' => null,
     ];
-
-    /** @var array Actions that are exempt from edit count limitations. */
-    protected array $tooHighEditCountActionBlacklist = [];
 
     /**
      * Actions that require the target user to opt in to the restricted statistics.
@@ -498,13 +495,13 @@ abstract class XtoolsController extends AbstractController
         $originalParams = $this->params;
 
         // Don't continue if the user doesn't exist.
-        if (isset($this->project) && !$user->existsOnProject($this->project)) {
+        if ($this->project && !$user->existsOnProject($this->project)) {
             $this->throwXtoolsException($this->getIndexRoute(), 'user-not-found', [], 'username');
         }
 
         // Reject users with a crazy high edit count.
         if ($this->tooHighEditCountRoute() &&
-            !in_array($this->controllerAction, $this->tooHighEditCountActionBlacklist) &&
+            !in_array($this->controllerAction, $this->tooHighEditCountActionAllowlist()) &&
             $user->hasTooManyEdits($this->project)
         ) {
             /** TODO: Somehow get this to use self::throwXtoolsException */
@@ -836,7 +833,7 @@ abstract class XtoolsController extends AbstractController
         $ret = array_merge([
             'project' => $this->project,
             'user' => $this->user,
-            'page' => $this->page,
+            'page' => $this->page ?? null,
             'namespace' => $this->namespace,
             'start' => $this->start,
             'end' => $this->end,
