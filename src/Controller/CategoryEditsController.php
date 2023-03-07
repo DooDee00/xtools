@@ -8,9 +8,18 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Exception\XtoolsHttpException;
+use App\Helper\I18nHelper;
 use App\Model\CategoryEdits;
 use App\Repository\CategoryEditsRepository;
+use App\Repository\EditRepository;
+use App\Repository\PageRepository;
+use App\Repository\ProjectRepository;
+use App\Repository\UserRepository;
+use GuzzleHttp\Client;
+use Psr\Cache\CacheItemPoolInterface;
+use Psr\Container\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
@@ -19,8 +28,9 @@ use Symfony\Component\Routing\Annotation\Route;
  */
 class CategoryEditsController extends XtoolsController
 {
-    /** @var CategoryEdits The CategoryEdits instance. */
     protected CategoryEdits $categoryEdits;
+    protected CategoryEditsRepository $categoryEditsRepo;
+    protected EditRepository $editRepo;
 
     /** @var string[] The categories, with or without namespace. */
     protected array $categories;
@@ -37,6 +47,36 @@ class CategoryEditsController extends XtoolsController
     public function getIndexRoute(): string
     {
         return 'CategoryEdits';
+    }
+
+    /**
+     * @param RequestStack $requestStack
+     * @param ContainerInterface $container
+     * @param CacheItemPoolInterface $cache
+     * @param Client $guzzle
+     * @param I18nHelper $i18n
+     * @param ProjectRepository $projectRepo
+     * @param UserRepository $userRepo
+     * @param PageRepository $pageRepo
+     * @param EditRepository $editRepo
+     * @param CategoryEditsRepository $categoryEditsRepo
+     */
+    public function __construct(
+        RequestStack $requestStack,
+        ContainerInterface $container,
+        CacheItemPoolInterface $cache,
+        Client $guzzle,
+        I18nHelper $i18n,
+        ProjectRepository $projectRepo,
+        UserRepository $userRepo,
+        PageRepository $pageRepo,
+        EditRepository $editRepo,
+        CategoryEditsRepository $categoryEditsRepo
+    ) {
+        $this->editRepo = $editRepo;
+        $this->pageRepo = $pageRepo;
+        $this->categoryEditsRepo = $categoryEditsRepo;
+        parent::__construct($requestStack, $container, $cache, $guzzle, $i18n, $projectRepo, $userRepo, $pageRepo);
     }
 
     /**
@@ -80,11 +120,14 @@ class CategoryEditsController extends XtoolsController
      * Set defaults, and instantiate the CategoryEdits model. This is called at the top of every view action.
      * @codeCoverageIgnore
      */
-    private function setupCategoryEdits(CategoryEditsRepository $categoryEditsRepo): void
+    private function setupCategoryEdits(): void
     {
         $this->extractCategories();
 
         $this->categoryEdits = new CategoryEdits(
+            $this->categoryEditsRepo,
+            $this->editRepo,
+            $this->pageRepo,
             $this->project,
             $this->user,
             $this->categories,
@@ -92,7 +135,6 @@ class CategoryEditsController extends XtoolsController
             $this->end,
             $this->offset
         );
-        $this->categoryEdits->setRepository($categoryEditsRepo);
 
         $this->output = [
             'xtPage' => 'CategoryEdits',

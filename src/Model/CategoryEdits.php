@@ -8,12 +8,17 @@ declare(strict_types = 1);
 namespace App\Model;
 
 use App\Repository\CategoryEditsRepository;
+use App\Repository\EditRepository;
+use App\Repository\PageRepository;
 
 /**
  * CategoryEdits returns statistics about edits made by a user to pages in given categories.
  */
 class CategoryEdits extends Model
 {
+    protected EditRepository $editRepo;
+    protected PageRepository $pageRepo;
+
     /** @var string[] The categories. */
     protected array $categories;
 
@@ -32,6 +37,8 @@ class CategoryEdits extends Model
     /**
      * Constructor for the CategoryEdits class.
      * @param CategoryEditsRepository $repository
+     * @param EditRepository $editRepo
+     * @param PageRepository $pageRepo
      * @param Project $project
      * @param User $user
      * @param array $categories
@@ -41,6 +48,8 @@ class CategoryEdits extends Model
      */
     public function __construct(
         CategoryEditsRepository $repository,
+        EditRepository $editRepo,
+        PageRepository $pageRepo,
         Project $project,
         User $user,
         array $categories,
@@ -49,6 +58,8 @@ class CategoryEdits extends Model
         $offset = false
     ) {
         $this->repository = $repository;
+        $this->editRepo = $editRepo;
+        $this->pageRepo = $pageRepo;
         $this->project = $project;
         $this->user = $user;
         $this->categories = array_map(function ($category) {
@@ -176,7 +187,13 @@ class CategoryEdits extends Model
             return $revs;
         }
 
-        $this->categoryEdits = Edit::getEditsFromRevs($this->project, $this->user, $revs);
+        $this->categoryEdits = Edit::getEditsFromRevs(
+            $this->pageRepo,
+            $this->editRepo,
+            $this->project,
+            $this->user,
+            $revs
+        );
 
         return $this->categoryEdits;
     }
