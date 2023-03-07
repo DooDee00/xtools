@@ -415,23 +415,20 @@ class Edit extends Model
 
     /**
      * Get the name of the tool that was used to make this edit.
-     * @param ContainerInterface $container The DI container.
-     * @return array|false The name of the tool that was used to make the edit
+     * @return array|false The name of the tool(s) that was used to make the edit.
      */
-    public function getTool(ContainerInterface $container)
+    public function getTool()
     {
-        $automatedEditsHelper = $container->get('app.automated_edits_helper');
-        return $automatedEditsHelper->getTool((string)$this->comment, $this->getProject());
+        return $this->repository->getAutoEditsHelper()->getTool($this->comment, $this->getProject());
     }
 
     /**
      * Was the edit (semi-)automated, based on the edit summary?
-     * @param ContainerInterface $container
      * @return bool
      */
-    public function isAutomated(ContainerInterface $container): bool
+    public function isAutomated(): bool
     {
-        return (bool)$this->getTool($container);
+        return (bool)$this->getTool();
     }
 
     /**

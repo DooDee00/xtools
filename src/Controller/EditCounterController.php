@@ -94,7 +94,6 @@ class EditCounterController extends XtoolsController
     ) {
         $this->editCounterRepo = $editCounterRepo;
         $this->userRightsRepo = $userRightsRepo;
-        $this->restrictedActions = ['monthCountsApi', 'timecardApi'];
         parent::__construct($requestStack, $container, $cache, $guzzle, $i18n, $projectRepo, $userRepo, $pageRepo);
     }
 
@@ -108,12 +107,19 @@ class EditCounterController extends XtoolsController
     }
 
     /**
-     * The rightsChanges action is exempt from the edit count limitation.
      * @inheritDoc
      */
     public function tooHighEditCountActionAllowlist(): array
     {
         return ['rightsChanges'];
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function restrictedApiActions(): array
+    {
+        return ['monthCountsApi', 'timecardApi'];
     }
 
     /**

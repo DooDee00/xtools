@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Helper\AutomatedEditsHelper;
 use App\Helper\I18nHelper;
 use App\Model\TopEdits;
 use App\Repository\EditRepository;
@@ -27,8 +28,9 @@ use Symfony\Component\Routing\Annotation\Route;
  */
 class TopEditsController extends XtoolsController
 {
-    protected TopEditsRepository $topEditsRepo;
+    protected AutomatedEditsHelper $autoEditsHelper;
     protected EditRepository $editRepo;
+    protected TopEditsRepository $topEditsRepo;
 
     /**
      * Get the name of the tool's index route. This is also the name of the associated model.
@@ -52,6 +54,7 @@ class TopEditsController extends XtoolsController
      * @param PageRepository $pageRepo
      * @param TopEditsRepository $topEditsRepo
      * @param EditRepository $editRepo
+     * @param AutomatedEditsHelper $autoEditsHelper
      */
     public function __construct(
         RequestStack $requestStack,
@@ -63,11 +66,12 @@ class TopEditsController extends XtoolsController
         UserRepository $userRepo,
         PageRepository $pageRepo,
         TopEditsRepository $topEditsRepo,
-        EditRepository $editRepo
+        EditRepository $editRepo,
+        AutomatedEditsHelper $autoEditsHelper
     ) {
-        $this->restrictedActions = ['namespaceTopEditsUserApi'];
         $this->topEditsRepo = $topEditsRepo;
         $this->editRepo = $editRepo;
+        $this->autoEditsHelper = $autoEditsHelper;
         $this->limit = 1000;
         parent::__construct($requestStack, $container, $cache, $guzzle, $i18n, $projectRepo, $userRepo, $pageRepo);
     }
@@ -87,6 +91,14 @@ class TopEditsController extends XtoolsController
     public function tooHighEditCountActionAllowlist(): array
     {
         return ['singlePageTopEdits'];
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function restrictedApiActions(): array
+    {
+        return ['namespaceTopEditsUserApi'];
     }
 
     /**
@@ -131,6 +143,8 @@ class TopEditsController extends XtoolsController
         return new TopEdits(
             $this->topEditsRepo,
             $this->editRepo,
+            $this->userRepo,
+            $this->autoEditsHelper,
             $this->project,
             $this->user,
             $this->page,

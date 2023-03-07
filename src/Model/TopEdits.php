@@ -10,14 +10,16 @@ namespace App\Model;
 use App\Helper\AutomatedEditsHelper;
 use App\Repository\EditRepository;
 use App\Repository\TopEditsRepository;
+use App\Repository\UserRepository;
 
 /**
  * TopEdits returns the top-edited pages by a user.
  */
 class TopEdits extends Model
 {
-    /** @var EditRepository */
+    protected AutomatedEditsHelper $autoEditsHelper;
     protected EditRepository $editRepo;
+    protected UserRepository $userRepo;
 
     /** @var string[]|Edit[] Top edits, either to a page or across namespaces. */
     protected array $topEdits = [];
@@ -47,6 +49,8 @@ class TopEdits extends Model
      * TopEdits constructor.
      * @param TopEditsRepository $repository
      * @param EditRepository $editRepo
+     * @param UserRepository $userRepo
+     * @param AutomatedEditsHelper $autoEditsHelper
      * @param Project $project
      * @param User $user
      * @param Page|null $page
@@ -60,6 +64,8 @@ class TopEdits extends Model
     public function __construct(
         TopEditsRepository $repository,
         EditRepository $editRepo,
+        UserRepository $userRepo,
+        AutomatedEditsHelper $autoEditsHelper,
         Project $project,
         User $user,
         ?Page $page = null,
@@ -71,6 +77,8 @@ class TopEdits extends Model
     ) {
         $this->repository = $repository;
         $this->editRepo = $editRepo;
+        $this->userRepo = $userRepo;
+        $this->autoEditsHelper = $autoEditsHelper;
         $this->project = $project;
         $this->user = $user;
         $this->page = $page;
@@ -284,15 +292,10 @@ class TopEdits extends Model
     {
         $edits = [];
 
-        /** @var AutomatedEditsHelper $aeh */
-        $aeh = $this->repository
-            ->getContainer()
-            ->get('app.automated_edits_helper');
-
         foreach ($revs as $revision) {
             // Check if the edit was reverted based on the edit summary of the following edit.
             // If so, update $revision so that when an Edit is instantiated, it will have the 'reverted' option set.
-            if ($aeh->isRevert($revision['parent_comment'], $this->project)) {
+            if ($this->autoEditsHelper->isRevert($revision['parent_comment'], $this->project)) {
                 $revision['reverted'] = 1;
             }
 
@@ -312,9 +315,9 @@ class TopEdits extends Model
      */
     private function getEditAndIncrementCounts(array $revision): Edit
     {
-        $edit = new Edit($this->editRepo, $this->page, $revision);
+        $edit = new Edit($this->editRepo, $this->userRepo, $this->page, $revision);
 
-        if ($edit->isAutomated($this->repository->getContainer())) {
+        if ($edit->isAutomated()) {
             $this->totalAutomated++;
         }
 

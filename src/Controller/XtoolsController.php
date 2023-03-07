@@ -102,13 +102,6 @@ abstract class XtoolsController extends AbstractController
     ];
 
     /**
-     * Actions that require the target user to opt in to the restricted statistics.
-     * @see https://www.mediawiki.org/wiki/XTools/Edit_Counter#restricted_stats
-     * @var string[]
-     */
-    protected array $restrictedActions = [];
-
-    /**
      * Require the tool's index route (initial form) be defined here. This should also
      * be the name of the associated model, if present.
      * @return string
@@ -140,6 +133,17 @@ abstract class XtoolsController extends AbstractController
      * @return string[] Domain or DB names.
      */
     protected function supportedProjects(): array
+    {
+        return [];
+    }
+
+    /**
+     * Override this to set which API actions for the controller require the
+     * target user to opt in to the restricted statistics.
+     * @see https://www.mediawiki.org/wiki/XTools/Edit_Counter#restricted_stats
+     * @return array
+     */
+    protected function restrictedApiActions(): array
     {
         return [];
     }
@@ -252,7 +256,7 @@ abstract class XtoolsController extends AbstractController
      */
     private function checkRestrictedApiEndpoint(): void
     {
-        $restrictedAction = in_array($this->controllerAction, $this->restrictedActions);
+        $restrictedAction = in_array($this->controllerAction, $this->restrictedApiActions());
 
         if ($this->isApi && $restrictedAction && !$this->project->userHasOptedIn($this->user)) {
             throw new XtoolsHttpException(

@@ -3,9 +3,14 @@ declare(strict_types = 1);
 
 namespace App\Repository;
 
+use App\Helper\AutomatedEditsHelper;
 use App\Model\Edit;
 use App\Model\Page;
 use App\Model\Project;
+use GuzzleHttp\Client;
+use Psr\Cache\CacheItemPoolInterface;
+use Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
 
 /**
  * An EditRepository fetches data about a single revision.
@@ -13,6 +18,29 @@ use App\Model\Project;
  */
 class EditRepository extends Repository
 {
+    protected AutomatedEditsHelper $autoEditsHelper;
+
+    public function __construct(
+        ContainerInterface $container,
+        CacheItemPoolInterface $cache,
+        Client $guzzle,
+        LoggerInterface $logger,
+        bool $isWMF,
+        int $queryTimeout,
+        AutomatedEditsHelper $autoEditsHelper
+    ) {
+        $this->autoEditsHelper = $autoEditsHelper;
+        parent::__construct($container, $cache, $guzzle, $logger, $isWMF, $queryTimeout);
+    }
+
+    /**
+     * @return AutomatedEditsHelper
+     */
+    public function getAutoEditsHelper(): AutomatedEditsHelper
+    {
+        return $this->autoEditsHelper;
+    }
+
     /**
      * Get an Edit instance given the revision ID. This does NOT set the associated User or Page.
      * @param UserRepository $userRepo
