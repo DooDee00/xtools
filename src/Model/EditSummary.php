@@ -47,6 +47,7 @@ class EditSummary extends Model
      * @param EditSummaryRepository $repository
      * @param Project $project The project we're working with.
      * @param User $user The user to process.
+     * @param I18nHelper $i18n
      * @param int|string $namespace Namespace ID or 'all' for all namespaces.
      * @param int|false $start Start date as Unix timestamp.
      * @param int|false $end End date as Unix timestamp.
@@ -56,6 +57,7 @@ class EditSummary extends Model
         EditSummaryRepository $repository,
         Project $project,
         User $user,
+        I18nHelper $i18n,
         $namespace,
         $start = false,
         $end = false,
@@ -64,20 +66,11 @@ class EditSummary extends Model
         $this->repository = $repository;
         $this->project = $project;
         $this->user = $user;
+        $this->i18n = $i18n;
         $this->namespace = $namespace;
         $this->start = $start;
         $this->end = $end;
         $this->numEditsRecent = $numEditsRecent;
-    }
-
-    /**
-     * Make the I18nHelper accessible to EditSummary.
-     * @param I18nHelper $i18n
-     * @codeCoverageIgnore
-     */
-    public function setI18nHelper(I18nHelper $i18n): void
-    {
-        $this->i18n = $i18n;
     }
 
     /**
