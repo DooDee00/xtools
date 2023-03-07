@@ -286,8 +286,6 @@ class TopEditsTest extends TestAdapter
     ): TopEdits {
         return new TopEdits(
             $this->teRepo,
-            $this->editRepo,
-            $this->userRepo,
             $this->autoEditsHelper,
             $this->project,
             $this->user,

@@ -7,10 +7,14 @@ declare(strict_types = 1);
 
 namespace App\Repository;
 
+use App\Model\Edit;
 use App\Model\Page;
 use App\Model\Project;
 use App\Model\User;
+use GuzzleHttp\Client;
 use PDO;
+use Psr\Cache\CacheItemPoolInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Wikimedia\IPUtils;
 
@@ -22,6 +26,35 @@ use Wikimedia\IPUtils;
  */
 class TopEditsRepository extends UserRepository
 {
+    protected EditRepository $editRepo;
+    protected UserRepository $userRepo;
+
+    public function __construct(
+        ContainerInterface $container,
+        CacheItemPoolInterface $cache,
+        Client $guzzle,
+        LoggerInterface $logger,
+        bool $isWMF,
+        int $queryTimeout,
+        EditRepository $editRepo,
+        UserRepository $userRepo
+    ) {
+        $this->editRepo = $editRepo;
+        $this->userRepo = $userRepo;
+        parent::__construct($container, $cache, $guzzle, $logger, $isWMF, $queryTimeout);
+    }
+
+    /**
+     * Factory to instantiate a new Edit for the given revision.
+     * @param Page $page
+     * @param array $revision
+     * @return Edit
+     */
+    public function getEdit(Page $page, array $revision): Edit
+    {
+        return new Edit($this->editRepo, $this->userRepo, $page, $revision);
+    }
+
     /**
      * Get the top edits by a user in a single namespace.
      * @param Project $project

@@ -10,7 +10,6 @@ namespace App\Controller;
 use App\Helper\AutomatedEditsHelper;
 use App\Helper\I18nHelper;
 use App\Model\TopEdits;
-use App\Repository\EditRepository;
 use App\Repository\PageRepository;
 use App\Repository\ProjectRepository;
 use App\Repository\TopEditsRepository;
@@ -29,7 +28,6 @@ use Symfony\Component\Routing\Annotation\Route;
 class TopEditsController extends XtoolsController
 {
     protected AutomatedEditsHelper $autoEditsHelper;
-    protected EditRepository $editRepo;
     protected TopEditsRepository $topEditsRepo;
 
     /**
@@ -53,7 +51,6 @@ class TopEditsController extends XtoolsController
      * @param UserRepository $userRepo
      * @param PageRepository $pageRepo
      * @param TopEditsRepository $topEditsRepo
-     * @param EditRepository $editRepo
      * @param AutomatedEditsHelper $autoEditsHelper
      */
     public function __construct(
@@ -66,11 +63,9 @@ class TopEditsController extends XtoolsController
         UserRepository $userRepo,
         PageRepository $pageRepo,
         TopEditsRepository $topEditsRepo,
-        EditRepository $editRepo,
         AutomatedEditsHelper $autoEditsHelper
     ) {
         $this->topEditsRepo = $topEditsRepo;
-        $this->editRepo = $editRepo;
         $this->autoEditsHelper = $autoEditsHelper;
         $this->limit = 1000;
         parent::__construct($requestStack, $container, $cache, $guzzle, $i18n, $projectRepo, $userRepo, $pageRepo);
@@ -142,8 +137,6 @@ class TopEditsController extends XtoolsController
     {
         return new TopEdits(
             $this->topEditsRepo,
-            $this->editRepo,
-            $this->userRepo,
             $this->autoEditsHelper,
             $this->project,
             $this->user,

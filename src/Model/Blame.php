@@ -4,15 +4,12 @@ declare(strict_types = 1);
 namespace App\Model;
 
 use App\Repository\BlameRepository;
-use App\Repository\EditRepository;
 
 /**
  * A Blame will search the given page for the given text and return the relevant revisions and authors.
  */
 class Blame extends Authorship
 {
-    protected EditRepository $editRepo;
-
     /** @var string Text to search for. */
     protected string $query;
 
@@ -30,13 +27,11 @@ class Blame extends Authorship
      */
     public function __construct(
         BlameRepository $repository,
-        EditRepository $editRepo,
         Page $page,
         string $query,
         ?string $target = null
     ) {
         parent::__construct($repository, $page, $target);
-        $this->editRepo = $editRepo;
         $this->query = $query;
     }
 
