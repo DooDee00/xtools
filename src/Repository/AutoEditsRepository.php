@@ -1,7 +1,4 @@
 <?php
-/**
- * This file contains only the AutoEditsRepository class.
- */
 
 declare(strict_types = 1);
 
@@ -9,11 +6,7 @@ namespace App\Repository;
 
 use App\Model\Project;
 use App\Model\User;
-use GuzzleHttp\Client;
 use PDO;
-use Psr\Cache\CacheItemPoolInterface;
-use Psr\Container\ContainerInterface;
-use Psr\Log\LoggerInterface;
 use Wikimedia\IPUtils;
 
 /**

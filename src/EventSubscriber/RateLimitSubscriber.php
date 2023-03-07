@@ -1,7 +1,4 @@
 <?php
-/**
- * This file contains only the RateLimitSubscriber class.
- */
 
 declare(strict_types = 1);
 
@@ -112,7 +109,7 @@ class RateLimitSubscriber implements EventSubscriberInterface
 
         /**
          * Rate limiting will not apply to these actions
-         * @var array
+         * @var array $actionWhitelist
          */
         $actionWhitelist = [
             'indexAction', 'showAction', 'aboutAction', 'loginAction', 'recordUsageAction', 'oauthCallbackAction',

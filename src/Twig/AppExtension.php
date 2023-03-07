@@ -1,7 +1,4 @@
 <?php
-/**
- * This file contains only the AppExtension class.
- */
 
 declare(strict_types = 1);
 
@@ -28,26 +25,15 @@ use Wikimedia\IPUtils;
  */
 class AppExtension extends AbstractExtension
 {
-    /** @var ContainerInterface The application's container interface. */
-    protected $container;
-
-    /** @var RequestStack The request stack. */
-    protected $requestStack;
-
-    /** @var SessionInterface User's current session. */
-    protected $session;
-
-    /** @var I18nHelper For i18n and l10n. */
-    protected $i18n;
+    protected ContainerInterface $container;
+    protected I18nHelper $i18n;
+    protected ProjectRepository $projectRepo;
+    protected RequestStack $requestStack;
+    protected SessionInterface $session;
+    protected UrlGeneratorInterface $urlGenerator;
 
     /** @var float Duration of the current HTTP request in seconds. */
-    protected $requestTime;
-
-    /** @var UrlGeneratorInterface */
-    protected $urlGenerator;
-
-    /** @var ProjectRepository */
-    protected $projectRepo;
+    protected float $requestTime;
 
     /** @var bool */
     protected $isWMF;
@@ -602,7 +588,7 @@ class AppExtension extends AbstractExtension
     /**
      * Format a given number or fraction as a percentage.
      * @param int|float $numerator Numerator or single fraction if denominator is ommitted.
-     * @param int $denominator Denominator.
+     * @param int|null $denominator Denominator.
      * @param integer $precision Number of decimal places to show.
      * @return string Formatted percentage.
      */
@@ -686,7 +672,7 @@ class AppExtension extends AbstractExtension
      * @param int $seconds Number of seconds.
      * @param bool $translate Used for unit testing. Set to false to return
      *   the value and i18n key, instead of the actual translation.
-     * @return string|mixed[] Examples: '30 seconds', '2 minutes', '15 hours', '500 days',
+     * @return string|array Examples: '30 seconds', '2 minutes', '15 hours', '500 days',
      *   or [30, 'num-seconds'] (etc.) if $translate is false.
      */
     public function formatDuration(int $seconds, bool $translate = true)
@@ -705,12 +691,12 @@ class AppExtension extends AbstractExtension
      * @param int $seconds Number of seconds.
      * @return array<integer|string> [int - message value, string - message key]
      */
-    private function getDurationMessageKey(int $seconds)
+    private function getDurationMessageKey(int $seconds): array
     {
-        /** @var int $val Value to show in message */
+        // Value to show in message
         $val = $seconds;
 
-        /** @var string $key Unit of time, used in the key for the i18n message */
+        // Unit of time, used in the key for the i18n message
         $key = 'seconds';
 
         if ($seconds >= 86400) {
@@ -732,22 +718,22 @@ class AppExtension extends AbstractExtension
 
     /**
      * Build URL query string from given params.
-     * @param string[] $params
+     * @param string[]|null $params
      * @return string
      */
-    public function buildQuery(array $params): string
+    public function buildQuery(?array $params): string
     {
-        return is_array($params) ? http_build_query($params) : '';
+        return $params ? http_build_query($params) : '';
     }
 
     /**
      * Shorthand to get the current request from the request stack.
-     * @return \Symfony\Component\HttpFoundation\Request
-     * There is no request stack in the tests.
+     * @return Request
+     * There is no request stack in the unit tests.
      * @codeCoverageIgnore
      */
-    private function getRequest(): \Symfony\Component\HttpFoundation\Request
+    private function getRequest(): Request
     {
-        return $this->container->get('request_stack')->getCurrentRequest();
+        return $this->requestStack->getCurrentRequest();
     }
 }

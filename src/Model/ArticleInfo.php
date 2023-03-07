@@ -1,13 +1,9 @@
 <?php
-/**
- * This file contains only the ArticleInfo class.
- */
 
 declare(strict_types = 1);
 
 namespace App\Model;
 
-use App\Helper\I18nHelper;
 use DateTime;
 
 /**
@@ -499,7 +495,7 @@ class ArticleInfo extends ArticleInfoApi
 
         /**
          * Data about previous edits so that we can use them as a basis for comparison.
-         * @var $prevEdits Edit[]
+         * @var Edit[] $prevEdits
          */
         $prevEdits = [
             // The previous Edit, used to discount content that was reverted.

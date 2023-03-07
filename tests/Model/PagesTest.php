@@ -1,7 +1,4 @@
 <?php
-/**
- * This file contains only the PagesTest class.
- */
 
 declare(strict_types = 1);
 

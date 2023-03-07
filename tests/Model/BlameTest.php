@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types = 1);
 
 namespace App\Tests\Model;
@@ -9,7 +10,6 @@ use App\Model\Project;
 use App\Repository\BlameRepository;
 use App\Repository\PageRepository;
 use App\Tests\TestAdapter;
-use PHPUnit\Framework\MockObject\MockObject;
 
 class BlameTest extends TestAdapter
 {

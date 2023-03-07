@@ -1,7 +1,4 @@
 <?php
-/**
- * This file contains the code that powers the RfX Vote Calculator page of XTools.
- */
 
 declare(strict_types=1);
 
@@ -104,11 +101,7 @@ class RfXVoteCalculatorController extends XtoolsController
             }
         }
 
-        /**
-         * Contains the total number of !votes the user made, keyed by the RfX
-         * type and then the vote type.
-         * @var array
-         */
+        // Contains the total number of !votes the user made, keyed by the RfX type and then the vote type.
         $totals = [];
 
         foreach ($pageTypes as $type) {

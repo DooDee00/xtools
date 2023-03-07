@@ -1,7 +1,4 @@
 <?php
-/**
- * This file contains only the CategoryEditsTest class.
- */
 
 declare(strict_types = 1);
 

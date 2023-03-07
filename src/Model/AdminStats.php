@@ -1,7 +1,4 @@
 <?php
-/**
- * This file contains only the AdminStats class.
- */
 
 declare(strict_types = 1);
 
@@ -123,10 +120,7 @@ class AdminStats extends Model
             return $this->usersAndGroups;
         }
 
-        /**
-         * All the user groups that are considered capable of making the relevant actions for $this->group.
-         * @var string[]
-         */
+        // All the user groups that are considered capable of making the relevant actions for $this->group.
         $groupUserGroups = $this->getRepository()->getUserGroups($this->project, $this->type);
 
         $this->usersAndGroups = $this->project->getUsersInGroups($groupUserGroups['local'], $groupUserGroups['global']);

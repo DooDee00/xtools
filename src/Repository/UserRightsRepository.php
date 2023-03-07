@@ -1,7 +1,4 @@
 <?php
-/**
- * This file contains only the UserRightsRepository class.
- */
 
 declare(strict_types = 1);
 

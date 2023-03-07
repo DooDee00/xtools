@@ -1,7 +1,4 @@
 <?php
-/**
- * This file contains only the PageRepository class.
- */
 
 declare(strict_types = 1);
 
@@ -38,7 +35,7 @@ class PageRepository extends Repository
      * Get metadata about a set of pages from the API.
      * @param Project $project The project to which the pages belong.
      * @param string[] $pageTitles Array of page titles.
-     * @return string[]|null Array keyed by the page names, each element with some of the following keys: pageid,
+     * @return array|null Array keyed by the page names, each element with some of the following keys: pageid,
      *   title, missing, displaytitle, url. Returns null if page does not exist.
      */
     public function getPagesInfo(Project $project, array $pageTitles): ?array

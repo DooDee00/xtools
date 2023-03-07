@@ -1,7 +1,4 @@
 <?php
-/**
- * This file contains the abstract XtoolsController, which all other controllers will extend.
- */
 
 declare(strict_types=1);
 

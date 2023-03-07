@@ -1,7 +1,4 @@
 <?php
-/**
- * This file contains only the PageAssessmentsRepository class.
- */
 
 declare(strict_types = 1);
 
@@ -9,11 +6,6 @@ namespace App\Repository;
 
 use App\Model\Page;
 use App\Model\Project;
-use GuzzleHttp\Client;
-use Psr\Cache\CacheItemPoolInterface;
-use Psr\Container\ContainerInterface;
-use Psr\Log\LoggerInterface;
-use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
 /**
  * An PageAssessmentsRepository is responsible for retrieving page assessment
@@ -22,8 +14,6 @@ use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
  */
 class PageAssessmentsRepository extends Repository
 {
-    protected ParameterBagInterface $parameterBag;
-
     /** @var array The assessments config. */
     protected array $assessments;
 

@@ -1,7 +1,4 @@
 <?php
-/**
- * This file contains only the User class.
- */
 
 declare(strict_types = 1);
 

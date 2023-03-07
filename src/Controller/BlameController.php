@@ -1,15 +1,13 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Helper\I18nHelper;
 use App\Model\Authorship;
 use App\Model\Blame;
 use App\Repository\BlameRepository;
 use App\Repository\EditRepository;
-use Symfony\Component\DependencyInjection\ContainerInterface;
-use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 

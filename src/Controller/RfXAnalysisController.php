@@ -1,7 +1,4 @@
 <?php
-/**
- * This file contains the code that powers the RfX Analysis page of XTools.
- */
 
 declare(strict_types=1);
 

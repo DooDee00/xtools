@@ -1,7 +1,4 @@
 <?php
-/**
- * This file contains tests for the AutomatedEditsHelper class.
- */
 
 declare(strict_types = 1);
 

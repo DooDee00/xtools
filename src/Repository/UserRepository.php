@@ -1,7 +1,4 @@
 <?php
-/**
- * This file contains only the UserRepository class.
- */
 
 declare(strict_types = 1);
 
@@ -23,6 +20,30 @@ use Wikimedia\IPUtils;
  */
 class UserRepository extends Repository
 {
+    protected ProjectRepository $projectRepo;
+
+    /**
+     * @param ContainerInterface $container
+     * @param CacheItemPoolInterface $cache
+     * @param Client $guzzle
+     * @param LoggerInterface $logger
+     * @param bool $isWMF
+     * @param int $queryTimeout
+     * @param ProjectRepository $projectRepo
+     */
+    public function __construct(
+        ContainerInterface $container,
+        CacheItemPoolInterface $cache,
+        Client $guzzle,
+        LoggerInterface $logger,
+        bool $isWMF,
+        int $queryTimeout,
+        ProjectRepository $projectRepo
+    ) {
+        $this->projectRepo = $projectRepo;
+        parent::__construct($container, $cache, $guzzle, $logger, $isWMF, $queryTimeout);
+    }
+
     /**
      * Get the user's ID and registration date.
      * @param string $databaseName The database to query.
@@ -290,8 +311,7 @@ class UserRepository extends Repository
 
         // Get the default project if not provided.
         if (!$project instanceof Project) {
-            $project = $this->
-            $project = ProjectRepository::getDefaultProject($this->container);
+            $project = $this->projectRepo->getDefaultProject();
         }
 
         $params = [

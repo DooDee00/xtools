@@ -1,7 +1,4 @@
 <?php
-/**
- * This file contains only the Edit class.
- */
 
 declare(strict_types = 1);
 
@@ -11,7 +8,6 @@ use App\Repository\EditRepository;
 use App\Repository\PageRepository;
 use App\Repository\UserRepository;
 use DateTime;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * An Edit is a single edit to a page on one project.

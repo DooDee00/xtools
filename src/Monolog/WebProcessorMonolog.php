@@ -1,7 +1,4 @@
 <?php
-/**
- * This file contains only the WebProcessorMonolog class.
- */
 
 declare(strict_types = 1);
 
@@ -15,9 +12,6 @@ use Symfony\Component\HttpFoundation\RequestStack;
 class WebProcessorMonolog
 {
     private RequestStack $requestStack;
-
-    /** @var string The unique identifier for the session. */
-    private string $sessionId;
 
     /**
      * WebProcessorMonolog constructor.

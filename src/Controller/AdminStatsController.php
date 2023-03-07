@@ -1,7 +1,4 @@
 <?php
-/**
- * This file contains the code that powers the AdminStats page of XTools.
- */
 
 declare(strict_types=1);
 

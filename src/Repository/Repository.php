@@ -1,7 +1,4 @@
 <?php
-/**
- * This file contains only the Repository class.
- */
 
 declare(strict_types = 1);
 
@@ -10,6 +7,7 @@ namespace App\Repository;
 use App\Model\Project;
 use DateInterval;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Driver\ResultStatement;
 use Doctrine\DBAL\Exception\DriverException;
 use Doctrine\DBAL\Query\QueryBuilder;
@@ -26,23 +24,16 @@ use Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException;
  */
 abstract class Repository
 {
-    /** @var ContainerInterface */
-    protected $container;
-
-    /** @var Client */
-    protected $guzzle;
+    protected CacheItemPoolInterface $cache;
+    protected ContainerInterface $container;
+    protected Client $guzzle;
+    protected LoggerInterface $logger;
 
     /** @var Connection The database connection to the meta database. */
     private $metaConnection;
 
     /** @var Connection The database connection to other tools' databases.  */
     private $toolsConnection;
-
-    /** @var CacheItemPoolInterface The cache. */
-    protected $cache;
-
-    /** @var LoggerInterface The logger. */
-    protected $logger;
 
     /** @var bool Whether this is configured as a WMF installation. */
     protected $isWMF;
@@ -248,11 +239,11 @@ abstract class Repository
      * Arguments that are a model should implement their own getCacheKey() that returns
      * a unique identifier for an instance of that model. See User::getCacheKey() for example.
      * @param array|mixed $args Array of arguments or a single argument.
-     * @param string $key Unique key for this function. If omitted the function name itself
+     * @param string|null $key Unique key for this function. If omitted the function name itself
      *   is used, which is determined using `debug_backtrace`.
      * @return string
      */
-    public function getCacheKey($args, $key = null): string
+    public function getCacheKey($args, ?string $key = null): string
     {
         if (null === $key) {
             $key = debug_backtrace()[1]['function'];
@@ -304,7 +295,7 @@ abstract class Repository
      * @param string $duration Valid DateInterval string.
      * @return mixed The given $value.
      */
-    public function setCache(string $cacheKey, $value, $duration = 'PT20M')
+    public function setCache(string $cacheKey, $value, string $duration = 'PT20M')
     {
         $cacheItem = $this->cache
             ->getItem($cacheKey)
@@ -363,7 +354,7 @@ abstract class Repository
      *   default specified by the app.query_timeout config parameter.
      * @return ResultStatement
      * @throws DriverException
-     * @throws \Doctrine\DBAL\DBALException
+     * @throws DBALException
      * @codeCoverageIgnore
      */
     public function executeProjectsQuery(

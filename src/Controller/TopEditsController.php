@@ -1,7 +1,4 @@
 <?php
-/**
- * This file contains only the TopEditsController class.
- */
 
 declare(strict_types=1);
 
@@ -166,10 +163,7 @@ class TopEditsController extends XtoolsController
      */
     public function namespaceTopEditsAction(): Response
     {
-        /**
-         * Max number of rows per namespace to show. `null` here will use the TopEdits default.
-         * @var int
-         */
+        // Max number of rows per namespace to show. `null` here will use the TopEdits default.
         $this->limit = $this->isSubRequest ? 10 : $this->limit;
 
         $topEdits = $this->setUpTopEdits();

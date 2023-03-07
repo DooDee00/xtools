@@ -1,7 +1,4 @@
 <?php
-/**
- * This file contains only the ArticleInfoController class.
- */
 
 declare(strict_types=1);
 
@@ -23,7 +20,6 @@ use GuzzleHttp\Exception\ServerException;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Container\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;

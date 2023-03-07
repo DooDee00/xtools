@@ -1,7 +1,4 @@
 <?php
-/**
- * This file contains only the ArticleInfoTest class.
- */
 
 declare(strict_types = 1);
 
@@ -328,7 +325,6 @@ class ArticleInfoTest extends TestAdapter
     {
         // ArticleInfo::updateToolCounts relies on there being entries in
         // the AutoEdits config for the project the edits were made on.
-        /** @var PageRepository|MockObject $pageRepo */
         $projectRepo = $this->createMock(ProjectRepository::class);
         $projectRepo->expects($this->once())
             ->method('getOne')

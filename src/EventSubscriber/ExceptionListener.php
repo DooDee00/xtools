@@ -1,9 +1,6 @@
 <?php
-declare(strict_types = 1);
 
-/**
- * This file contains only the ExceptionListener class.
- */
+declare(strict_types = 1);
 
 namespace App\EventSubscriber;
 
