@@ -24,35 +24,13 @@ use Wikimedia\IPUtils;
 class AutoEditsRepository extends UserRepository
 {
     /** @var array List of automated tools, used for fetching the tool list and filtering it. */
-    private $aeTools;
+    private array $aeTools;
 
     /** @var bool Whether to use the /sandbox version of the config, bypassing caching. */
-    private $useSandbox;
+    private bool $useSandbox = false;
 
     /** @var array Process cache for tags/IDs. */
-    private $tags;
-
-    /**
-     * AutoEditsRepository constructor. Used solely to set $useSandbox (from AutomatedEditsController).
-     * @param ContainerInterface $container
-     * @param CacheItemPoolInterface $cache
-     * @param Client $guzzle
-     * @param LoggerInterface $logger
-     * @param bool $isWMF
-     * @param bool $useSandbox
-     */
-    public function __construct(
-        ContainerInterface $container,
-        CacheItemPoolInterface $cache,
-        Client $guzzle,
-        LoggerInterface $logger,
-        bool $isWMF,
-        int $queryTimeout,
-        bool $useSandbox = false
-    ) {
-        parent::__construct($container, $cache, $guzzle, $logger, $isWMF, $queryTimeout);
-        $this->useSandbox = $useSandbox;
-    }
+    private array $tags;
 
     /**
      * @param bool $useSandbox

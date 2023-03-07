@@ -18,7 +18,6 @@ use Exception;
  */
 class UserRights extends Model
 {
-    /** @var I18nHelper For i18n and l10n. */
     protected I18nHelper $i18n;
 
     /** @var string[] Rights changes, keyed by timestamp then 'added' and 'removed'. */

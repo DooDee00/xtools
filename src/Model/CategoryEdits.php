@@ -10,6 +10,7 @@ namespace App\Model;
 use App\Repository\CategoryEditsRepository;
 use App\Repository\EditRepository;
 use App\Repository\PageRepository;
+use App\Repository\UserRepository;
 
 /**
  * CategoryEdits returns statistics about edits made by a user to pages in given categories.
@@ -18,6 +19,7 @@ class CategoryEdits extends Model
 {
     protected EditRepository $editRepo;
     protected PageRepository $pageRepo;
+    protected UserRepository $userRepo;
 
     /** @var string[] The categories. */
     protected array $categories;
@@ -39,6 +41,7 @@ class CategoryEdits extends Model
      * @param CategoryEditsRepository $repository
      * @param EditRepository $editRepo
      * @param PageRepository $pageRepo
+     * @param UserRepository $userRepo
      * @param Project $project
      * @param User $user
      * @param array $categories
@@ -50,6 +53,7 @@ class CategoryEdits extends Model
         CategoryEditsRepository $repository,
         EditRepository $editRepo,
         PageRepository $pageRepo,
+        UserRepository $userRepo,
         Project $project,
         User $user,
         array $categories,
@@ -60,6 +64,7 @@ class CategoryEdits extends Model
         $this->repository = $repository;
         $this->editRepo = $editRepo;
         $this->pageRepo = $pageRepo;
+        $this->userRepo = $userRepo;
         $this->project = $project;
         $this->user = $user;
         $this->categories = array_map(function ($category) {
@@ -190,6 +195,7 @@ class CategoryEdits extends Model
         $this->categoryEdits = Edit::getEditsFromRevs(
             $this->pageRepo,
             $this->editRepo,
+            $this->userRepo,
             $this->project,
             $this->user,
             $revs

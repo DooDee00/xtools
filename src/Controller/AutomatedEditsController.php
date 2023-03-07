@@ -7,7 +7,6 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Helper\AutomatedEditsHelper;
 use App\Helper\I18nHelper;
 use App\Model\AutoEdits;
 use App\Repository\AutoEditsRepository;
@@ -156,6 +155,7 @@ class AutomatedEditsController extends XtoolsController
             $this->autoEditsRepo,
             $this->editRepo,
             $this->pageRepo,
+            $this->userRepo,
             $this->project,
             $this->user,
             $this->namespace,
@@ -262,7 +262,7 @@ class AutomatedEditsController extends XtoolsController
     public function automatedToolsApiAction(): JsonResponse
     {
         $this->recordApiUsage('user/automated_tools');
-        return $this->getFormattedApiResponse($autoEditsHelper->getTools($this->project));
+        return $this->getFormattedApiResponse($this->autoEditsRepo->getTools($this->project));
     }
 
     /**

@@ -18,11 +18,10 @@ use Wikimedia\IPUtils;
  */
 class GlobalContribsRepository extends Repository
 {
+    protected ProjectRepository $projectRepo;
+
     /** @var Project CentralAuth project (meta.wikimedia for WMF installation). */
     protected Project $caProject;
-
-    /** @var ProjectRepository */
-    private ProjectRepository $projectRepo;
 
     public function __construct(
         ContainerInterface $container,
@@ -39,14 +38,6 @@ class GlobalContribsRepository extends Repository
         );
         $this->projectRepo = $projectRepo;
         $this->caProject->setRepository($this->projectRepo);
-    }
-
-    protected function getCentralAuthProject(): Project
-    {
-        if (!isset($this->caProject)) {
-            $this->caProject = new Project($this->container->getParameter('central_auth_project'));
-        }
-        return $this->caProject;
     }
 
     /**
@@ -86,12 +77,12 @@ class GlobalContribsRepository extends Repository
      * Get a user's total edit count on one or more project.
      * Requires the CentralAuth extension to be installed on the project.
      * @param User $user The user.
-     * @return mixed[]|false Elements are arrays with 'dbName' (string), and 'total' (int). False for logged out users.
+     * @return array|null Elements are arrays with 'dbName' (string), and 'total' (int). Null for logged out users.
      */
-    protected function globalEditCountsFromCentralAuth(User $user)
+    protected function globalEditCountsFromCentralAuth(User $user): ?array
     {
         if (true === $user->isAnon()) {
-            return false;
+            return null;
         }
 
         // Set up cache.

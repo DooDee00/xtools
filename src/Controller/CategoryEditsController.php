@@ -128,6 +128,7 @@ class CategoryEditsController extends XtoolsController
             $this->categoryEditsRepo,
             $this->editRepo,
             $this->pageRepo,
+            $this->userRepo,
             $this->project,
             $this->user,
             $this->categories,

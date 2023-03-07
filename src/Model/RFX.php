@@ -14,16 +14,16 @@ namespace App\Model;
 class RFX extends Model
 {
     /** @var array Data we parsed out of the page text */
-    private $data;
+    private array $data;
 
     /** @var array Duplicate voters */
-    private $duplicates;
+    private array $duplicates;
 
     /** @var null|string Username of the user we're looking for. */
-    private $userLookingFor;
+    private string $userLookingFor;
 
     /** @var string Section we found the user we're looking for */
-    private $userSectionFound;
+    private string $userSectionFound;
 
     /**
      * Attempts to find a signature in $input using the default regex.

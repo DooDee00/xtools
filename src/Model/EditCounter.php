@@ -18,10 +18,7 @@ use DateTime;
  */
 class EditCounter extends Model
 {
-    /** @var I18nHelper */
     protected I18nHelper $i18n;
-
-    /** @var UserRights */
     protected UserRights $userRights;
 
     /** @var int[] Revision and page counts etc. */

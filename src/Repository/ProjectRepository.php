@@ -89,9 +89,9 @@ class ProjectRepository extends Repository
     public function getGlobalProject(): Project
     {
         if ($this->isWMF) {
-            return self::getProject('metawiki', $this->container);
+            return $this->getProject('metawiki');
         } else {
-            return self::getDefaultProject($this->container);
+            return $this->getDefaultProject();
         }
     }
 

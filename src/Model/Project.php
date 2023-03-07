@@ -12,6 +12,8 @@ namespace App\Model;
  */
 class Project extends Model
 {
+    protected PageAssessments $pageAssessments;
+
     /** @var string The project name as supplied by the user. */
     protected string $nameUnnormalized;
 
@@ -20,9 +22,6 @@ class Project extends Model
 
     /** @var string[]|null Project's 'dbName', 'url' and 'lang'. */
     protected ?array $basicInfo;
-
-    /** @var PageAssessments Contains methods around the page assessments config for the Project. */
-    protected PageAssessments $pageAssessments;
 
     /**
      * Whether the user being queried for in this session has opted in to restricted statistics.
@@ -37,7 +36,6 @@ class Project extends Model
     public function __construct(string $nameOrUrl)
     {
         $this->nameUnnormalized = $nameOrUrl;
-//        $this->pageAssessments = new PageAssessments($this);
     }
 
     /**

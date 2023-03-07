@@ -16,7 +16,6 @@ use DateTime;
  */
 class EditSummary extends Model
 {
-    /** @var I18nHelper For i18n and l10n. */
     protected I18nHelper $i18n;
 
     /** @var int Number of edits from present to consider as 'recent'. */

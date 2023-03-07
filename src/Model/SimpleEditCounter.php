@@ -17,10 +17,10 @@ use App\Repository\SimpleEditCounterRepository;
 class SimpleEditCounter extends Model
 {
     /** @var bool Whether only limited results are given (due to high edit count). */
-    private $limited = false;
+    private bool $limited = false;
 
     /** @var array The Simple Edit Counter results. */
-    protected $data = [
+    protected array $data = [
         'user_id' => null,
         'deleted_edit_count' => 0,
         'live_edit_count' => 0,

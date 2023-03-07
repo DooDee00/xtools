@@ -14,11 +14,10 @@ use Symfony\Component\HttpFoundation\RequestStack;
  */
 class WebProcessorMonolog
 {
-    /** @var RequestStack The request stack. */
-    private $requestStack;
+    private RequestStack $requestStack;
 
     /** @var string The unique identifier for the session. */
-    private $sessionId;
+    private string $sessionId;
 
     /**
      * WebProcessorMonolog constructor.

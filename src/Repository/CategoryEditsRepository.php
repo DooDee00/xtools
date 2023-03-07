@@ -13,6 +13,10 @@ use App\Model\User;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Driver\ResultStatement;
 use Doctrine\DBAL\ParameterType;
+use GuzzleHttp\Client;
+use Psr\Cache\CacheItemPoolInterface;
+use Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
 use Wikimedia\IPUtils;
 
 /**
@@ -22,18 +26,19 @@ use Wikimedia\IPUtils;
  */
 class CategoryEditsRepository extends Repository
 {
-    /** @var AutomatedEditsHelper Used for fetching the tool list and filtering it. */
-    private $aeh;
+    protected AutomatedEditsHelper $autoEditsHelper;
 
-    /**
-     * Method to give the repository access to the AutomatedEditsHelper.
-     */
-    public function getHelper(): AutomatedEditsHelper
-    {
-        if (!isset($this->aeh)) {
-            $this->aeh = $this->container->get('app.automated_edits_helper');
-        }
-        return $this->aeh;
+    public function __construct(
+        ContainerInterface $container,
+        CacheItemPoolInterface $cache,
+        Client $guzzle,
+        LoggerInterface $logger,
+        bool $isWMF,
+        int $queryTimeout,
+        AutomatedEditsHelper $autoEditsHelper
+    ) {
+        $this->autoEditsHelper= $autoEditsHelper;
+        parent::__construct($container, $cache, $guzzle, $logger, $isWMF, $queryTimeout);
     }
 
     /**

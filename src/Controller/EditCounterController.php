@@ -317,7 +317,6 @@ class EditCounterController extends XtoolsController
      * )
      * @param GlobalContribsRepository $globalContribsRepo
      * @param EditRepository $editRepo
-     * @param UserRepository $userRepo
      * @return Response
      * @codeCoverageIgnore
      */
@@ -329,9 +328,9 @@ class EditCounterController extends XtoolsController
 
         $globalContribs = new GlobalContribs(
             $globalContribsRepo,
-            $editRepo,
             $this->pageRepo,
             $this->userRepo,
+            $editRepo,
             $this->user
         );
         $ret = [
