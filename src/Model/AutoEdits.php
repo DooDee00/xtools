@@ -10,6 +10,7 @@ namespace App\Model;
 use App\Repository\AutoEditsRepository;
 use App\Repository\EditRepository;
 use App\Repository\PageRepository;
+use App\Repository\UserRepository;
 
 /**
  * AutoEdits returns statistics about automated edits made by a user.
@@ -18,6 +19,7 @@ class AutoEdits extends Model
 {
     protected EditRepository $editRepo;
     protected PageRepository $pageRepo;
+    protected UserRepository $userRepo;
 
     /** @var null|string The tool we're searching for when fetching (semi-)automated edits. */
     protected ?string $tool;
@@ -48,6 +50,7 @@ class AutoEdits extends Model
      * @param AutoEditsRepository $repository
      * @param EditRepository $editRepo
      * @param PageRepository $pageRepo
+     * @param UserRepository $userRepo
      * @param Project $project
      * @param User $user
      * @param int|string $namespace Namespace ID or 'all'
@@ -61,6 +64,7 @@ class AutoEdits extends Model
         AutoEditsRepository $repository,
         EditRepository $editRepo,
         PageRepository $pageRepo,
+        UserRepository $userRepo,
         Project $project,
         User $user,
         $namespace = 0,
@@ -73,6 +77,7 @@ class AutoEdits extends Model
         $this->repository = $repository;
         $this->editRepo = $editRepo;
         $this->pageRepo = $pageRepo;
+        $this->userRepo = $userRepo;
         $this->project = $project;
         $this->user = $user;
         $this->namespace = $namespace;
@@ -172,6 +177,7 @@ class AutoEdits extends Model
         $this->nonAutomatedEdits = Edit::getEditsFromRevs(
             $this->pageRepo,
             $this->editRepo,
+            $this->userRepo,
             $this->project,
             $this->user,
             $revs
@@ -205,7 +211,14 @@ class AutoEdits extends Model
             return $revs;
         }
 
-        $this->automatedEdits = Edit::getEditsFromRevs($this->project, $this->user, $revs);
+        $this->automatedEdits = Edit::getEditsFromRevs(
+            $this->pageRepo,
+            $this->editRepo,
+            $this->userRepo,
+            $this->project,
+            $this->user,
+            $revs
+        );
 
         return $this->automatedEdits;
     }

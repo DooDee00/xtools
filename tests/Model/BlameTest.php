@@ -7,19 +7,15 @@ use App\Model\Blame;
 use App\Model\Page;
 use App\Model\Project;
 use App\Repository\BlameRepository;
+use App\Repository\PageRepository;
 use App\Tests\TestAdapter;
 use PHPUnit\Framework\MockObject\MockObject;
 
 class BlameTest extends TestAdapter
 {
-    /** @var Project */
-    protected $project;
-
-    /** @var Page */
-    protected $page;
-
-    /** @var BlameRepository|MockObject */
-    protected $blameRepo;
+    protected BlameRepository $blameRepo;
+    protected Page $page;
+    protected Project $project;
 
     /**
      * Set up shared mocks and class instances.
@@ -27,7 +23,8 @@ class BlameTest extends TestAdapter
     public function setUp(): void
     {
         $this->project = new Project('test.example.org');
-        $this->page = new Page($this->project, 'Test page');
+        $pageRepo = $this->createMock(PageRepository::class);
+        $this->page = new Page($pageRepo, $this->project, 'Test page');
         $this->blameRepo = $this->createMock(BlameRepository::class);
     }
 
@@ -37,7 +34,7 @@ class BlameTest extends TestAdapter
      */
     public function testBasics(): void
     {
-        $blame = new Blame($this->page, "Foo bar\nBAZ");
+        $blame = new Blame($this->blameRepo, $this->page, "Foo bar\nBAZ");
         static::assertEquals("Foo bar\nBAZ", $blame->getQuery());
         static::assertEquals('foobarbaz', $blame->getTokenizedQuery());
     }
@@ -80,8 +77,7 @@ class BlameTest extends TestAdapter
             ->method('getEditFromRevId')
             ->willReturn($this->createMock('App\Model\Edit'));
 
-        $blame = new Blame($this->page, 'Foo bar');
-        $blame->setRepository($this->blameRepo);
+        $blame = new Blame($this->blameRepo, $this->page, 'Foo bar');
         $blame->prepareData();
         $matches = $blame->getMatches();
 

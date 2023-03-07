@@ -44,8 +44,8 @@ abstract class Model
     /** @var false|int Unix timestamp to offset results which acts as a substitute for $end */
     protected $offset;
 
-    /** @var int Number of rows to fetch. */
-    protected int $limit;
+    /** @var int|null Number of rows to fetch. */
+    protected ?int $limit;
 
     /**
      * Set this model's data repository.

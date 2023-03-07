@@ -21,17 +21,10 @@ use App\Tests\TestAdapter;
  */
 class CategoryEditsTest extends TestAdapter
 {
-    /** @var Project The project instance. */
-    protected $project;
-
-    /** @var CategoryEdits The CategoryEdits instance. */
-    protected $ce;
-
-    /** @var CategoryEditsRepository The AdminStats repo instance. */
-    protected $ceRepo;
-
-    /** @var User The user instance. */
-    protected $user;
+    protected CategoryEdits $ce;
+    protected CategoryEditsRepository $ceRepo;
+    protected Project $project;
+    protected User $user;
 
     /**
      * Set up class instances and mocks.

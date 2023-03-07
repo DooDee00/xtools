@@ -68,6 +68,7 @@ class TopEditsController extends XtoolsController
         $this->restrictedActions = ['namespaceTopEditsUserApi'];
         $this->topEditsRepo = $topEditsRepo;
         $this->editRepo = $editRepo;
+        $this->limit = 1000;
         parent::__construct($requestStack, $container, $cache, $guzzle, $i18n, $projectRepo, $userRepo, $pageRepo);
     }
 
@@ -81,7 +82,6 @@ class TopEditsController extends XtoolsController
 
     /**
      * The Top Edits by page action is exempt from the edit count limitation.
-     * @return string[]
      * @inheritDoc
      */
     public function tooHighEditCountActionAllowlist(): array

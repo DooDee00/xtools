@@ -29,11 +29,11 @@ class Edit extends Model
     /** @var bool Whether or not this edit was a minor edit */
     protected bool $minor;
 
-    /** @var int|string|null Length of the page as of this edit, in bytes */
-    protected $length;
+    /** @var int|null Length of the page as of this edit, in bytes */
+    protected ?int $length;
 
-    /** @var int|string|null The diff size of this edit */
-    protected $lengthChange;
+    /** @var int|null The diff size of this edit */
+    protected ?int $lengthChange;
 
     /** @var string The edit summary */
     protected string $comment;
@@ -47,6 +47,7 @@ class Edit extends Model
     /**
      * Edit constructor.
      * @param EditRepository $repository
+     * @param UserRepository $userRepo
      * @param Page $page
      * @param string[] $attrs Attributes, as retrieved by PageRepository::getRevisions()
      */
@@ -69,8 +70,8 @@ class Edit extends Model
         $this->user = $attrs['user'] ?? ($attrs['username'] ? new User($this->userRepo, $attrs['username']) : null);
 
         $this->minor = '1' === $attrs['minor'];
-        $this->length = (int)$attrs['length'];
-        $this->lengthChange = (int)$attrs['length_change'];
+        $this->length = $attrs['length'] ?? (int)$attrs['length'];
+        $this->lengthChange = $attrs['length_change'] ?? (int)$attrs['length_change'];
         $this->comment = $attrs['comment'];
 
         if (isset($attrs['rev_sha1']) || isset($attrs['sha'])) {
@@ -85,6 +86,9 @@ class Edit extends Model
 
     /**
      * Get Edits given revision rows (JOINed on the page table).
+     * @param PageRepository $pageRepo
+     * @param EditRepository $editRepo
+     * @param UserRepository $userRepo
      * @param Project $project
      * @param User $user
      * @param array $revs Each must contain 'page_title' and 'page_namespace'.
@@ -93,16 +97,17 @@ class Edit extends Model
     public static function getEditsFromRevs(
         PageRepository $pageRepo,
         EditRepository $editRepo,
+        UserRepository $userRepo,
         Project $project,
         User $user,
         array $revs
     ): array {
-        return array_map(function ($rev) use ($pageRepo, $editRepo, $project, $user) {
+        return array_map(function ($rev) use ($pageRepo, $editRepo, $userRepo, $project, $user) {
             /** Page object to be passed to the Edit constructor. */
             $page = Page::newFromRow($pageRepo, $project, $rev);
             $rev['user'] = $user;
 
-            return new self($editRepo, $page, $rev);
+            return new self($editRepo, $userRepo, $page, $rev);
         }, $revs);
     }
 
@@ -450,6 +455,7 @@ class Edit extends Model
     /**
      * Formats the data as an array for use in JSON APIs.
      * @param bool $includeUsername False for most tools such as Global Contribs, AutoEdits, etc.
+     * @param bool $includeProject
      * @return array
      * @internal This method assumes the Edit was constructed with data already filled in from a database query.
      */

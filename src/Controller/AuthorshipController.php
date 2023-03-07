@@ -28,17 +28,11 @@ class AuthorshipController extends XtoolsController
     }
 
     /**
-     * Authorship constructor.
-     * @param RequestStack $requestStack
-     * @param ContainerInterface $container
-     * @param I18nHelper $i18n
+     * @inheritDoc
      */
-    public function __construct(RequestStack $requestStack, ContainerInterface $container, I18nHelper $i18n)
+    public function supportedProjects(): array
     {
-        // Ensures the requested project is validated against Authorship::SUPPORTED_PROJECTS, and not any valid project.
-        $this->supportedProjects = Authorship::SUPPORTED_PROJECTS;
-
-        parent::__construct($requestStack, $container, $i18n);
+        return Authorship::SUPPORTED_PROJECTS;
     }
 
     /**
@@ -99,9 +93,10 @@ class AuthorshipController extends XtoolsController
      *     defaults={"target"="latest"}
      * )
      * @param string $target
+     * @param AuthorshipRepository $authorshipRepo
      * @return Response
      */
-    public function resultAction(string $target): Response
+    public function resultAction(string $target, AuthorshipRepository $authorshipRepo): Response
     {
         if (0 !== $this->page->getNamespace()) {
             $this->addFlashMessage('danger', 'error-authorship-non-mainspace');
@@ -117,9 +112,7 @@ class AuthorshipController extends XtoolsController
             || null !== $this->get('request_stack')->getParentRequest();
         $limit = $isSubRequest ? 10 : ($this->limit ?? 500);
 
-        $authorshipRepo = new AuthorshipRepository();
-        $authorshipRepo->setContainer($this->container);
-        $authorship = new Authorship($this->page, $target, $limit);
+        $authorship = new Authorship($authorshipRepo, $this->page, $target, $limit);
         $authorship->setRepository($authorshipRepo);
         $authorship->prepareData();
 

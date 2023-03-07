@@ -63,10 +63,10 @@ abstract class XtoolsController extends AbstractController
     protected Project $project;
 
     /** @var User|null Relevant User parsed from the Request. */
-    protected ?User $user;
+    protected ?User $user = null;
 
     /** @var Page|null Relevant Page parsed from the Request. */
-    protected ?Page $page;
+    protected ?Page $page = null;
 
     /** @var int|false Start date parsed from the Request. */
     protected $start = false;
@@ -109,13 +109,6 @@ abstract class XtoolsController extends AbstractController
     protected array $restrictedActions = [];
 
     /**
-     * XtoolsController::validateProject() will ensure the given project matches one of these domains,
-     * instead of any valid project.
-     * @var string[]
-     */
-    protected array $supportedProjects;
-
-    /**
      * Require the tool's index route (initial form) be defined here. This should also
      * be the name of the associated model, if present.
      * @return string
@@ -138,6 +131,15 @@ abstract class XtoolsController extends AbstractController
      * @return string[]
      */
     protected function tooHighEditCountActionAllowlist(): array
+    {
+        return [];
+    }
+
+    /**
+     * Override to restrict a tool's access to only the specified projects, instead of any valid project.
+     * @return string[] Domain or DB names.
+     */
+    protected function supportedProjects(): array
     {
         return [];
     }
@@ -450,7 +452,7 @@ abstract class XtoolsController extends AbstractController
         $project = $this->projectRepo->getProject($projectQuery);
 
         // Check if it is an explicitly allowed project for the current tool.
-        if (isset($this->supportedProjects) && !in_array($project->getDomain(), $this->supportedProjects)) {
+        if ($this->supportedProjects() && !in_array($project->getDomain(), $this->supportedProjects())) {
             $this->throwXtoolsException(
                 $this->getIndexRoute(),
                 'error-authorship-unsupported-project',
@@ -551,10 +553,7 @@ abstract class XtoolsController extends AbstractController
      */
     public function validatePage(string $pageTitle): Page
     {
-        $page = new Page($this->project, $pageTitle);
-        $pageRepo = new PageRepository();
-        $pageRepo->setContainer($this->container);
-        $page->setRepository($pageRepo);
+        $page = new Page($this->pageRepo, $this->project, $pageTitle);
 
         if (!$page->exists()) {
             $this->throwXtoolsException(
