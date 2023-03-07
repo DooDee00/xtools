@@ -8,12 +8,17 @@ declare(strict_types = 1);
 namespace App\Model;
 
 use App\Repository\AutoEditsRepository;
+use App\Repository\EditRepository;
+use App\Repository\PageRepository;
 
 /**
  * AutoEdits returns statistics about automated edits made by a user.
  */
 class AutoEdits extends Model
 {
+    protected EditRepository $editRepo;
+    protected PageRepository $pageRepo;
+
     /** @var null|string The tool we're searching for when fetching (semi-)automated edits. */
     protected ?string $tool;
 
@@ -41,6 +46,8 @@ class AutoEdits extends Model
     /**
      * Constructor for the AutoEdits class.
      * @param AutoEditsRepository $repository
+     * @param EditRepository $editRepo
+     * @param PageRepository $pageRepo
      * @param Project $project
      * @param User $user
      * @param int|string $namespace Namespace ID or 'all'
@@ -52,6 +59,8 @@ class AutoEdits extends Model
      */
     public function __construct(
         AutoEditsRepository $repository,
+        EditRepository $editRepo,
+        PageRepository $pageRepo,
         Project $project,
         User $user,
         $namespace = 0,
@@ -62,6 +71,8 @@ class AutoEdits extends Model
         ?int $limit = self::RESULTS_PER_PAGE
     ) {
         $this->repository = $repository;
+        $this->editRepo = $editRepo;
+        $this->pageRepo = $pageRepo;
         $this->project = $project;
         $this->user = $user;
         $this->namespace = $namespace;
@@ -158,7 +169,13 @@ class AutoEdits extends Model
             return $revs;
         }
 
-        $this->nonAutomatedEdits = Edit::getEditsFromRevs($this->project, $this->user, $revs);
+        $this->nonAutomatedEdits = Edit::getEditsFromRevs(
+            $this->pageRepo,
+            $this->editRepo,
+            $this->project,
+            $this->user,
+            $revs
+        );
 
         return $this->nonAutomatedEdits;
     }

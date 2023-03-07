@@ -8,6 +8,7 @@ declare(strict_types = 1);
 namespace App\Model;
 
 use App\Repository\EditRepository;
+use App\Repository\PageRepository;
 use DateTime;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -84,17 +85,18 @@ class Edit extends Model
      * @return Edit[]
      */
     public static function getEditsFromRevs(
-        EditRepository $repository,
+        PageRepository $pageRepo,
+        EditRepository $editRepo,
         Project $project,
         User $user,
         array $revs
     ): array {
-        return array_map(function ($rev) use ($repository, $project, $user) {
+        return array_map(function ($rev) use ($pageRepo, $editRepo, $project, $user) {
             /** Page object to be passed to the Edit constructor. */
-            $page = Page::newFromRow($project, $rev);
+            $page = Page::newFromRow($pageRepo, $project, $rev);
             $rev['user'] = $user;
 
-            return new self($repository, $page, $rev);
+            return new self($editRepo, $page, $rev);
         }, $revs);
     }
 

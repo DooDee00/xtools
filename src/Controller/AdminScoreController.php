@@ -53,6 +53,7 @@ class AdminScoreController extends XtoolsController
     /**
      * Display the AdminScore results.
      * @Route("/adminscore/{project}/{username}", name="AdminScoreResult")
+     * @param AdminScoreRepository $adminScoreRepo
      * @return Response
      * @codeCoverageIgnore
      */
