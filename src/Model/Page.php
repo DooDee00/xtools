@@ -93,7 +93,7 @@ class Page extends Model
      */
     protected function getPageInfo(): ?array
     {
-        if (empty($this->pageInfo)) {
+        if (!isset($this->pageInfo)) {
             $this->pageInfo = $this->repository->getPageInfo($this->project, $this->unnormalizedPageName);
         }
         return $this->pageInfo;
@@ -305,7 +305,7 @@ class Page extends Model
      */
     public function getRevisions(?User $user = null, $start = false, $end = false): array
     {
-        if ($this->revisions) {
+        if (isset($this->revisions)) {
             return $this->revisions;
         }
 
@@ -376,7 +376,7 @@ class Page extends Model
 
     /**
      * Get Wikidata errors for this page
-     * @return string[] See getErrors() for format
+     * @return string[][] See getErrors() for format
      */
     public function getWikidataErrors(): array
     {
@@ -419,7 +419,7 @@ class Page extends Model
 
     /**
      * Get Wikidata and CheckWiki errors, if present
-     * @return string[] List of errors in the format:
+     * @return string[][] List of errors in the format:
      *    [[
      *         'prio' => int,
      *         'name' => string,

@@ -9,9 +9,9 @@ use App\Model\Project;
 use App\Model\User;
 use App\Repository\PageRepository;
 use App\Repository\ProjectRepository;
+use App\Repository\UserRepository;
 use App\Tests\TestAdapter;
 use DMS\PHPUnitExtensions\ArraySubset\ArraySubsetAsserts;
-use Symfony\Component\DependencyInjection\Container;
 
 /**
  * Tests for the Page class.
@@ -20,16 +20,14 @@ class PageTest extends TestAdapter
 {
     use ArraySubsetAsserts;
 
-    /** @var Container The Symfony container ($localContainer because we can't override self::$container). */
-    protected $localContainer;
+    protected PageRepository $pageRepo;
 
     /**
      * Set up client and set container.
      */
     public function setUp(): void
     {
-        $client = static::createClient();
-        $this->localContainer = $client->getContainer();
+        $this->pageRepo = $this->createMock(PageRepository::class);
     }
 
     /**
@@ -38,29 +36,25 @@ class PageTest extends TestAdapter
     public function testTitles(): void
     {
         $project = new Project('TestProject');
-        $pageRepo = $this->createMock(PageRepository::class);
         $data = [
             [$project, 'Test_Page_1', ['title' => 'Test_Page_1']],
             [$project, 'Test_Page_2', ['title' => 'Test_Page_2', 'displaytitle' => '<em>Test</em> page 2']],
         ];
-        $pageRepo->method('getPageInfo')->will($this->returnValueMap($data));
+        $this->pageRepo->method('getPageInfo')->will($this->returnValueMap($data));
 
         // Page with no display title.
-        $page = new Page($project, 'Test_Page_1');
-        $page->setRepository($pageRepo);
+        $page = new Page($this->pageRepo, $project, 'Test_Page_1');
         static::assertEquals('Test_Page_1', $page->getTitle());
         static::assertEquals('Test_Page_1', $page->getDisplayTitle());
 
         // Page with a display title.
-        $page = new Page($project, 'Test_Page_2');
-        $page->setRepository($pageRepo);
+        $page = new Page($this->pageRepo, $project, 'Test_Page_2');
         static::assertEquals('Test_Page_2', $page->getTitle());
         static::assertEquals('<em>Test</em> page 2', $page->getDisplayTitle());
 
         // Getting the unnormalized title should not call getPageInfo.
-        $page = new Page($project, 'talk:Test Page_3');
-        $page->setRepository($pageRepo);
-        $pageRepo->expects($this->never())->method('getPageInfo');
+        $page = new Page($this->pageRepo, $project, 'talk:Test Page_3');
+        $this->pageRepo->expects($this->never())->method('getPageInfo');
         static::assertEquals('talk:Test Page_3', $page->getTitle(true));
     }
 
@@ -81,12 +75,12 @@ class PageTest extends TestAdapter
             ->will($this->returnValueMap($data));
 
         // Existing page.
-        $page1 = new Page($project, 'Existing_page');
+        $page1 = new Page($this->pageRepo, $project, 'Existing_page');
         $page1->setRepository($pageRepo);
         static::assertTrue($page1->exists());
 
         // Missing page.
-        $page2 = new Page($project, 'Missing_page');
+        $page2 = new Page($this->pageRepo, $project, 'Missing_page');
         $page2->setRepository($pageRepo);
         static::assertFalse($page2->exists());
     }
@@ -117,7 +111,7 @@ class PageTest extends TestAdapter
                     'wikibase_item' => 'Q95',
                 ],
             ]);
-        $page = new Page($project, 'User:Test:123');
+        $page = new Page($this->pageRepo, $project, 'User:Test:123');
         $page->setRepository($pageRepo);
 
         static::assertEquals(42, $page->getId());
@@ -132,14 +126,12 @@ class PageTest extends TestAdapter
 
     /**
      * Test fetching of wikitext
+     * FIXME
      */
     public function testWikitext(): void
     {
-        $pageRepo = new PageRepository();
-        $pageRepo->setContainer($this->localContainer);
-        $project = ProjectRepository::getProject('en.wikipedia.org', $this->localContainer);
-        $page = new Page($project, 'Main Page');
-        $page->setRepository($pageRepo);
+        $project = new Project('en.wikipedia.org');
+        $page = new Page($this->pageRepo, $project, 'Main Page');
 
         // We want to do a real-world test. enwiki's Main Page does not change much,
         // and {{Main Page banner}} in particular should be there indefinitely, hopefully :)
@@ -173,7 +165,7 @@ class PageTest extends TestAdapter
         $pageRepo->expects($this->once())
             ->method('getWikidataItems')
             ->willReturn($wikidataItems);
-        $page = new Page(new Project('TestProject'), 'Test_Page');
+        $page = new Page($this->pageRepo, new Project('TestProject'), 'Test_Page');
         $page->setRepository($pageRepo);
 
         static::assertArraySubset($wikidataItems, $page->getWikidataItems());
@@ -185,7 +177,7 @@ class PageTest extends TestAdapter
             ->willReturn([
                 'pageprops' => [],
             ]);
-        $page2 = new Page(new Project('TestProject'), 'Test_Page');
+        $page2 = new Page($this->pageRepo, new Project('TestProject'), 'Test_Page');
         $page2->setRepository($pageRepo2);
         static::assertNull($page2->getWikidataId());
         static::assertEquals(0, $page2->countWikidataItems());
@@ -196,27 +188,21 @@ class PageTest extends TestAdapter
      */
     public function testCountWikidataItems(): void
     {
-        $pageRepo = $this->createMock(PageRepository::class);
-        $page = new Page(new Project('TestProject'), 'Test_Page');
-        $pageRepo->method('countWikidataItems')
+        $page = new Page($this->pageRepo, new Project('TestProject'), 'Test_Page');
+        $this->pageRepo->method('countWikidataItems')
             ->with($page)
             ->willReturn(2);
-        $page->setRepository($pageRepo);
 
         static::assertEquals(2, $page->countWikidataItems());
     }
 
     /**
-     * A list of a single user's edits on this page can be retrieved, along with the count of
-     * these revisions, and the total bytes added and removed.
-     * @TODO this is not finished yet
+     * @covers Page::getRevisions
+     * @covers Page::getNumRevisions
      */
     public function testUsersEdits(): void
     {
-        $this->markTestIncomplete();
-        $pageRepo = $this->createMock(PageRepository::class);
-        $pageRepo
-            ->method('getRevisions')
+        $this->pageRepo->method('getRevisions')
             ->with()
             ->willReturn([
                 [
@@ -225,12 +211,17 @@ class PageTest extends TestAdapter
                     'length_change' => '1',
                     'comment' => 'One',
                 ],
+                [
+                    'id' => '2',
+                    'timestamp' => '20170506100000',
+                    'length_change' => '2',
+                    'comment' => 'Two',
+                ],
             ]);
-
-        $page = new Page(new Project('exampleWiki'), 'Page');
-        $page->setRepository($pageRepo);
-        $user = new User('Testuser');
-        static::assertCount(3, $page->getRevisions($user));
+        $page = new Page($this->pageRepo, new Project('exampleWiki'), 'Page');
+        $user = new User($this->createMock(UserRepository::class), 'Testuser');
+        static::assertCount(2, $page->getRevisions($user));
+        static::assertEquals(2, $page->getNumRevisions());
     }
 
     /**
@@ -239,10 +230,7 @@ class PageTest extends TestAdapter
      */
     public function testWikidataErrors(): void
     {
-        $pageRepo = $this->createMock(PageRepository::class);
-
-        $pageRepo
-            ->method('getWikidataInfo')
+        $this->pageRepo->method('getWikidataInfo')
             ->with()
             ->willReturn([
                 [
@@ -250,8 +238,7 @@ class PageTest extends TestAdapter
                     'term_text' => 'My article',
                 ],
             ]);
-        $pageRepo
-            ->method('getPageInfo')
+        $this->pageRepo->method('getPageInfo')
             ->with()
             ->willReturn([
                 'pagelanguage' => 'en',
@@ -260,9 +247,7 @@ class PageTest extends TestAdapter
                 ],
             ]);
 
-        $page = new Page(new Project('exampleWiki'), 'Page');
-        $page->setRepository($pageRepo);
-
+        $page = new Page($this->pageRepo, new Project('exampleWiki'), 'Page');
         $wikidataErrors = $page->getWikidataErrors();
 
         static::assertArraySubset(
@@ -283,7 +268,6 @@ class PageTest extends TestAdapter
      */
     public function testErrors(): void
     {
-        $pageRepo = $this->createMock(PageRepository::class);
         $checkWikiErrors = [
             [
                 'error' => '61',
@@ -304,22 +288,22 @@ class PageTest extends TestAdapter
             ],
         ];
 
-        $pageRepo->method('getCheckWikiErrors')
+        $this->pageRepo->method('getCheckWikiErrors')
             ->willReturn($checkWikiErrors);
-        $pageRepo->method('getWikidataInfo')
+        $this->pageRepo->method('getWikidataInfo')
             ->willReturn([[
                 'term' => 'label',
                 'term_text' => 'My article',
             ]]);
-        $pageRepo->method('getPageInfo')
+        $this->pageRepo->method('getPageInfo')
             ->willReturn([
                 'pagelanguage' => 'en',
                 'pageprops' => [
                     'wikibase_item' => 'Q123',
                 ],
             ]);
-        $page = new Page(new Project('exampleWiki'), 'Page');
-        $page->setRepository($pageRepo);
+        $page = new Page($this->pageRepo, new Project('exampleWiki'), 'Page');
+        $page->setRepository($this->pageRepo);
 
         static::assertEquals($checkWikiErrors, $page->getCheckWikiErrors());
         static::assertEquals(
@@ -340,10 +324,9 @@ class PageTest extends TestAdapter
             ],
         ];
 
-        $pageRepo = $this->createMock(PageRepository::class);
-        $pageRepo->method('getPageviews')->willReturn($pageviewsData);
-        $page = new Page(new Project('exampleWiki'), 'Page');
-        $page->setRepository($pageRepo);
+        $this->pageRepo->method('getPageviews')->willReturn($pageviewsData);
+        $page = new Page($this->pageRepo, new Project('exampleWiki'), 'Page');
+        $page->setRepository($this->pageRepo);
 
         static::assertEquals(
             3500,
@@ -358,11 +341,8 @@ class PageTest extends TestAdapter
      */
     public function testIsMainPage(): void
     {
-        $pageRepo = new PageRepository();
-        $pageRepo->setContainer($this->localContainer);
-        $project = ProjectRepository::getProject('en.wikipedia.org', $this->localContainer);
-        $page = new Page($project, 'Main Page');
-        $page->setRepository($pageRepo);
+        $project = ProjectRepository::getProject('en.wikipedia.org');
+        $page = new Page($this->pageRepo, $project, 'Main Page');
         static::assertTrue($page->isMainPage());
     }
 
@@ -379,7 +359,7 @@ class PageTest extends TestAdapter
         ];
         $pageRepo = $this->createMock(PageRepository::class);
         $pageRepo->method('countLinksAndRedirects')->willReturn($data);
-        $page = new Page(new Project('exampleWiki'), 'Page');
+        $page = new Page($this->pageRepo, new Project('exampleWiki'), 'Page');
         $page->setRepository($pageRepo);
 
         static::assertEquals($data, $page->countLinksAndRedirects());

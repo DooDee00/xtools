@@ -8,9 +8,11 @@ use App\Helper\I18nHelper;
 use App\Model\EditCounter;
 use App\Model\Project;
 use App\Model\User;
+use App\Model\UserRights;
 use App\Repository\EditCounterRepository;
 use App\Repository\ProjectRepository;
 use App\Repository\UserRepository;
+use App\Repository\UserRightsRepository;
 use App\Tests\TestAdapter;
 use DateTime;
 use DMS\PHPUnitExtensions\ArraySubset\ArraySubsetAsserts;
@@ -25,23 +27,15 @@ class EditCounterTest extends TestAdapter
 {
     use ArraySubsetAsserts;
 
-    /** @var Project The project instance. */
-    protected $project;
-
-    /** @var ProjectRepository The project repository instance. */
-    protected $projectRepo;
-
-    /** @var EditCounter The edit counter instance. */
-    protected $editCounter;
-
-    /** @var MockObject|EditCounterRepository The edit counter repository instance. */
-    protected $editCounterRepo;
-
-    /** @var User The user instance. */
-    protected $user;
-
-    /** @var I18nHelper For i18n and l10n. */
-    protected $i18n;
+    protected EditCounter $editCounter;
+    protected EditCounterRepository $editCounterRepo;
+    protected I18nHelper $i18n;
+    protected Project $project;
+    protected ProjectRepository $projectRepo;
+    protected User $user;
+    protected UserRights $userRights;
+    protected UserRightsRepository $userRightsRepo;
+    protected UserRepository $userRepo;
 
     /**
      * Set up shared mocks and class instances.
@@ -58,12 +52,18 @@ class EditCounterTest extends TestAdapter
         $this->project = new Project('test.example.org');
         $this->project->setRepository($this->projectRepo);
 
-        $this->user = new User('Testuser');
-        /** @var MockObject|UserRepository $userRepo */
-        $userRepo = $this->createMock(UserRepository::class);
-        $this->user->setRepository($userRepo);
+        $this->userRepo = $this->createMock(UserRepository::class);
+        $this->user = new User($this->userRepo, 'Testuser');
+        $this->userRights = $this->createMock(UserRights::class);
+        $this->userRightsRepo = $this->createMock(UserRightsRepository::class);
 
-        $this->editCounter = new EditCounter($this->project, $this->user, $this->i18n);
+        $this->editCounter = new EditCounter(
+            $this->editCounterRepo,
+            $this->i18n,
+            $this->userRights,
+            $this->project,
+            $this->user
+        );
         $this->editCounter->setRepository($this->editCounterRepo);
     }
 
@@ -135,10 +135,10 @@ class EditCounterTest extends TestAdapter
         $this->editCounterRepo->expects(static::once())
             ->method('getPairData')
             ->willReturn([
-                'edited-live' => '3',
-                'edited-deleted' => '1',
-                'created-live' => '6',
-                'created-deleted' => '2',
+                'edited-live' => 3,
+                'edited-deleted' => 1,
+                'created-live' => 6,
+                'created-deleted' => 2,
             ]);
 
         static::assertEquals(3, $this->editCounter->countLivePagesEdited());
@@ -452,14 +452,13 @@ class EditCounterTest extends TestAdapter
     /**
      * Parsing block log entries.
      * @dataProvider blockLogProvider
-     * @param $logEntry
-     * @param $assertion
+     * @param array $logEntry
+     * @param array $assertion
      */
     public function testParseBlockLogEntry(array $logEntry, array $assertion): void
     {
-        $editCounter = new EditCounter($this->project, $this->user, $this->i18n);
         static::assertEquals(
-            $editCounter->parseBlockLogEntry($logEntry),
+            $this->editCounter->parseBlockLogEntry($logEntry),
             $assertion
         );
     }
@@ -516,7 +515,7 @@ class EditCounterTest extends TestAdapter
      */
     public function testUserRightsChanges(): void
     {
-        $this->editCounterRepo->expects(static::once())
+        $this->userRightsRepo->expects(static::once())
             ->method('getRightsChanges')
             ->willReturn([[
                     // Added: interface-admin, temporary.
@@ -659,7 +658,7 @@ class EditCounterTest extends TestAdapter
                 'grantType' => 'manual',
                 'type' => 'meta',
             ],
-        ], $this->editCounter->getRightsChanges());
+        ], $this->editCounter->getUserRights()->getRightsChanges());
 
         $this->editCounterRepo->expects(static::once())
             ->method('getGlobalRightsChanges')
@@ -683,7 +682,7 @@ class EditCounterTest extends TestAdapter
                 'grantType' => 'manual',
                 'type' => 'global',
             ],
-        ], $this->editCounter->getGlobalRightsChanges());
+        ], $this->editCounter->getUserRights()->getGlobalRightsChanges());
 
         /** @var MockObject|UserRepository $userRepo */
         $userRepo = $this->createMock(UserRepository::class);
@@ -698,13 +697,13 @@ class EditCounterTest extends TestAdapter
         // Current rights.
         static::assertEquals(
             ['sysop', 'bureaucrat'],
-            $this->editCounter->getRightsStates()['local']['current']
+            $this->editCounter->getUserRights()->getRightsStates()['local']['current']
         );
 
         // Former rights.
         static::assertEquals(
             ['interface-admin', 'ipblock-exempt', 'filemover', 'templateeditor', 'rollbacker'],
-            $this->editCounter->getRightsStates()['local']['former']
+            $this->editCounter->getUserRights()->getRightsStates()['local']['former']
         );
 
         // Admin status.

@@ -359,7 +359,7 @@ class Edit extends Model
     }
 
     /**
-     * Get edit summary as 'wikified' HTML markup (alias of Edit::getWikifiedSummary()).
+     * Get edit summary as 'wikified' HTML markup (alias of Edit::getWikifiedComment()).
      * @return string
      */
     public function getWikifiedSummary(): string

@@ -8,45 +8,46 @@ use App\Helper\I18nHelper;
 use App\Model\EditSummary;
 use App\Model\Project;
 use App\Model\User;
+use App\Repository\EditSummaryRepository;
+use App\Repository\UserRepository;
 use App\Tests\TestAdapter;
-use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Component\HttpFoundation\Session\Session;
+use ReflectionClass;
 
 /**
  * Tests for EditSummary.
  */
 class EditSummaryTest extends TestAdapter
 {
-    /** @var EditSummary The article info instance. */
-    protected $editSummary;
+    protected EditSummary $editSummary;
+    protected Project $project;
+    protected User $user;
 
-    /** @var User The user instance. */
-    protected $user;
-
-    /** @var Project The project instance. */
-    protected $project;
-
-    /** @var \ReflectionClass So we can test private methods. */
-    private $reflectionClass;
+    /** @var ReflectionClass So we can test private methods. */
+    private ReflectionClass $reflectionClass;
 
     /**
      * Set up shared mocks and class instances.
      */
     public function setUp(): void
     {
-        $client = static::createClient();
         $this->project = new Project('TestProject');
-        $this->user = new User('Test user');
-        $this->editSummary = new EditSummary($this->project, $this->user, 'all', false, false, 1);
-
-        $stack = new RequestStack();
-        $session = new Session();
-        $i18nHelper = new I18nHelper($client->getContainer(), $stack, $session);
-        $this->editSummary->setI18nHelper($i18nHelper);
+        $userRepo = $this->createMock(UserRepository::class);
+        $this->user = new User($userRepo, 'Test user');
+        $editSummaryRepo = $this->createMock(EditSummaryRepository::class);
+        $this->editSummary = new EditSummary(
+            $editSummaryRepo,
+            $this->project,
+            $this->user,
+            $this->createMock(I18nHelper::class),
+            'all',
+            false,
+            false,
+            1
+        );
 
         // Don't care that private methods "shouldn't" be tested...
         // With EditSummary many are very testworthy and otherwise fragile.
-        $this->reflectionClass = new \ReflectionClass($this->editSummary);
+        $this->reflectionClass = new ReflectionClass($this->editSummary);
     }
 
     public function testHasSummary(): void
